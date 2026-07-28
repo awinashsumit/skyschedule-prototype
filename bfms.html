@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<!--
+  skySchedule - BFMs (roster of people)
+  Row click opens a profile drawer (history + details). Manage actions live in a
+  per-row overflow menu. Deactivate uses an alert dialog that names affected
+  shifts; Restore is immediate with an undo toast.
+-->
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>skySchedule - BFMs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./dashboard.css?v=2" />
+  <style>
+    /* Author rules set display, which beats the browser's [hidden] default.
+       Every hideable overlay/panel on this page needs an explicit guard. */
+    .dropdown-menu[hidden], .overlay[hidden], .drawer[hidden],
+    .dialog-footer[hidden], .popover[hidden], .bulk-bar[hidden] { display: none; }
+    .dropdown-menu a.list-item, .dropdown-menu button.list-item { text-decoration: none; }
+    button.dropdown { appearance: none; border: 0; font: inherit; cursor: pointer; }
+    .popover button.list-item, .dropdown-menu button.list-item {
+      appearance: none; border: 0; background: transparent; font: inherit;
+      cursor: pointer; text-align: left; width: 100%;
+    }
+    .app-header.is-dark .dropdown-menu { color: var(--fg-high); }
+    .app-header.is-dark .dropdown-menu a.list-item { color: var(--fg-high); }
+    .app-header.is-dark .dropdown-menu .input { background: var(--color-surface); color: var(--fg-high); box-shadow: inset 0 0 0 1px var(--border-ui); }
+    .app-header.is-dark .dropdown-menu .input::placeholder { color: var(--fg-subtle); }
+    .app-header.is-dark .dropdown-menu .input:focus { box-shadow: inset 0 0 0 1px var(--accent-8); }
+    .app-header.is-dark .dropdown-menu .search .search-icon { color: var(--fg-subtle); }
+
+    /* Roster rows are clickable (they open the profile drawer) */
+    .bfm-row { cursor: pointer; }
+    /* The overflow trigger stays visible at rest: hover-only actions are
+       undiscoverable, and this is the only route to Edit/Availability/Deactivate. */
+    .bfm-row .row-actions { color: var(--fg-subtle); transition: color .12s; }
+    .bfm-row:hover .row-actions { color: var(--fg-high); }
+    .name-cell { display: flex; align-items: center; gap: var(--space-3); }
+    .name-main { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+    .name-line { display: flex; align-items: center; gap: var(--space-2); }
+    .name-text { font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-high); }
+    .name-sub { font-size: var(--fs-1); color: var(--fg-subtle); }
+    /* Positions: primary is the strong tag, secondary are quieter. Both neutral,
+       never amber, because a position is a label and not a status. */
+    .pos-primary { display: inline-flex; align-items: center; height: 24px; padding: 0 var(--space-2); border-radius: var(--radius-2); background: var(--gray-4); color: var(--fg-high); font-size: var(--fs-1); font-weight: var(--weight-medium); }
+    .pos-secondary { display: inline-flex; align-items: center; height: 24px; padding: 0 var(--space-2); border-radius: var(--radius-2); box-shadow: inset 0 0 0 1px var(--border-subtle); color: var(--fg-low); font-size: var(--fs-1); }
+    .pos-wrap { display: flex; flex-wrap: wrap; gap: 4px; }
+
+    .bulk-bar { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--accent-3); border-radius: var(--radius-3); margin-bottom: var(--space-4); }
+
+    .drawer-head { display: flex; align-items: flex-start; gap: var(--space-3); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border-subtle); }
+    .stat-tile { padding: var(--space-3); border-radius: var(--radius-3); box-shadow: inset 0 0 0 1px var(--border-subtle); }
+    .stat-tile .st-val { font-size: var(--fs-5); font-weight: var(--weight-bold); color: var(--fg-high); }
+    .stat-tile .st-lab { font-size: var(--fs-1); color: var(--fg-low); }
+    .hist-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) 0; border-bottom: 1px solid var(--border-subtle); }
+    .hist-row:last-child { border-bottom: 0; }
+
+    /* Availability: one compact row per day instead of seven full-width blocks */
+    .avail-row { display: grid; grid-template-columns: 92px 44px 1fr auto; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--border-subtle); }
+    .avail-row:last-child { border-bottom: 0; }
+    .avail-times { display: flex; align-items: center; gap: var(--space-2); }
+    .avail-row.is-off .avail-times { opacity: .4; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+
+    <header class="app-header is-dark">
+      <div class="brand">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect width="24" height="24" rx="6" fill="var(--accent-9)"/><text x="12" y="16.5" text-anchor="middle" font-size="13" font-weight="700" fill="var(--accent-contrast)">S</text></svg>
+        <span>skySchedule</span>
+      </div>
+      <div class="search" style="flex:1;max-width:520px;margin:0 var(--space-4);">
+        <span class="search-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></svg></span>
+        <input class="input" placeholder="Search shifts, BFMs, locations..." />
+      </div>
+      <div class="header-right">
+        <span style="position:relative;">
+          <button class="dropdown" data-loc-toggle aria-expanded="false" style="min-width:0;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /> <circle cx="12" cy="10" r="3" /></svg>
+            skypoint
+            <span class="dropdown-chevron"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5" /> <path d="m7 9 5-5 5 5" /></svg></span>
+          </button>
+          <div class="dropdown-menu" id="locMenu" hidden style="position:absolute;right:0;top:calc(100% + 8px);z-index:50;min-width:260px;">
+            <div class="search" style="margin:var(--space-1) var(--space-1) var(--space-2);">
+              <span class="search-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></svg></span>
+              <input class="input" id="locSearch" placeholder="Search locations..." />
+            </div>
+            <a class="list-item" href="#">All my locations</a>
+            <div class="list-item is-header">Locations</div>
+            <div class="scroll-area" id="locList" style="max-height:288px;overflow:auto;">
+              <a class="list-item" href="#">community reflect</a>
+              <a class="list-item" href="#">Sky Test</a>
+              <a class="list-item" href="#">Browser testing claude</a>
+              <a class="list-item" href="#">Test Reflect</a>
+              <a class="list-item" href="#">Claude Test Community</a>
+              <a class="list-item" href="#">QA Onboarding Test</a>
+              <a class="list-item" href="#">Skypoint-Test</a>
+              <a class="list-item" href="#">Demo Senior Living QA</a>
+              <a class="list-item is-selected" href="#"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg> skypoint</a>
+            </div>
+          </div>
+        </span>
+        <button class="icon-btn" aria-label="Notifications, 3 unread"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0" /> <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></svg><span class="ic-badge">3</span></button>
+        <button class="icon-btn" aria-label="Toggle theme" data-theme-toggle><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg></button>
+        <span class="divider-v"></span>
+        <span class="header-user"><span class="avatar">SA</span><span>Sumit Awinash</span></span>
+      </div>
+    </header>
+
+    <nav class="app-sidebar" aria-label="Primary">
+      <button class="sidebar-toggle" aria-label="Collapse navigation">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" /></svg>
+      </button>
+
+      <div class="nav-section">Workspace</div>
+      <a class="nav-item" href="dashboard.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1" /> <rect width="7" height="5" x="14" y="3" rx="1" /> <rect width="7" height="9" x="14" y="12" rx="1" /> <rect width="7" height="5" x="3" y="16" rx="1" /></svg>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a class="nav-item" href="schedule.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4" /> <path d="M16 2v4" /> <rect width="18" height="18" x="3" y="4" rx="2" /> <path d="M3 10h18" /></svg>
+        <span class="nav-label">Schedule</span>
+      </a>
+      <a class="nav-item is-active" href="bfms.html" aria-current="page">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /> <path d="M16 3.128a4 4 0 0 1 0 7.744" /> <path d="M22 21v-2a4 4 0 0 0-3-3.87" /> <circle cx="9" cy="7" r="4" /></svg>
+        <span class="nav-label">BFMs</span>
+      </a>
+      <a class="nav-item" href="communications.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" /></svg>
+        <span class="nav-label">Communications</span>
+      </a>
+      <a class="nav-item" href="community.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" /> <path d="M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14" /> <path d="M8 6v8" /></svg>
+        <span class="nav-label">Community</span>
+      </a>
+
+      <div class="nav-section">Assistant</div>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /> <path d="M20 2v4" /> <path d="M22 4h-4" /> <circle cx="4" cy="20" r="2" /></svg>
+        <span class="nav-label">skyAgent</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 18V5" /> <path d="M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4" /> <path d="M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5" /> <path d="M17.997 5.125a4 4 0 0 1 2.526 5.77" /> <path d="M18 18a4 4 0 0 0 2-7.464" /> <path d="M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517" /> <path d="M6 18a4 4 0 0 1-2-7.464" /> <path d="M6.003 5.125a4 4 0 0 0-2.526 5.77" /></svg>
+        <span class="nav-label">skyBrain</span>
+      </a>
+
+      <div class="nav-section">Settings</div>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /> <circle cx="12" cy="10" r="3" /></svg>
+        <span class="nav-label">Locations</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /> <rect width="20" height="14" x="2" y="6" rx="2" /></svg>
+        <span class="nav-label">Positions</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18" /> <path d="M3 12h18" /> <rect x="3" y="3" width="18" height="18" rx="2" /></svg>
+        <span class="nav-label">Groups</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
+        <span class="nav-label">HRIS</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0" /> <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></svg>
+        <span class="nav-label">Notifications</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /> <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /> <path d="M12 17h.01" /></svg>
+        <span class="nav-label">Help &amp; Support</span>
+      </a>
+
+    </nav>
+
+    <main class="app-content">
+      <div class="content-body">
+
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4);">
+          <header class="page-header">
+            <h1>BFMs</h1>
+            <p>People who can be scheduled at skypoint, with their positions and employment status.</p>
+          </header>
+          <button class="btn btn-solid" id="addBfmBtn">
+            <svg class="btn-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /> <path d="M12 5v14" /></svg>
+            Add BFM
+          </button>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Roster status" style="margin-bottom:var(--space-4);">
+          <button class="tab is-active" role="tab" aria-selected="true" data-roster-tab="active">Active <span class="t-1" style="color:var(--fg-subtle);" id="countActive">10</span></button>
+          <button class="tab" role="tab" aria-selected="false" data-roster-tab="deactivated">Deactivated <span class="t-1" style="color:var(--fg-subtle);" id="countDeactivated">2</span></button>
+        </div>
+
+        <div id="bulkBar" class="bulk-bar" hidden>
+          <span class="t-2 fw-medium" style="color:var(--accent-11);"><span id="bulkCount">0</span> selected</span>
+          <span style="flex:1;"></span>
+          <button class="btn btn-surface is-sm" id="bulkAvailabilityBtn">Set availability</button>
+          <button class="btn btn-surface is-sm" id="bulkDeactivateBtn">Deactivate</button>
+          <button class="btn btn-ghost is-sm" id="bulkClearBtn">Clear</button>
+        </div>
+
+        <div class="table-toolbar" style="margin-bottom:var(--space-4);">
+          <div class="search" style="min-width:280px;">
+            <span class="search-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></svg></span>
+            <input class="input" id="bfmSearch" placeholder="Search this list by name, email, or ID" />
+          </div>
+          <span class="toolbar-spacer"></span>
+          <select class="select" id="positionFilter" style="width:auto;">
+            <option value="">All positions</option>
+          </select>
+          <select class="select" id="statusFilter" style="width:auto;">
+            <option value="">All employment types</option>
+            <option>Full-time</option>
+            <option>Part-time</option>
+            <option>Agency</option>
+          </select>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th class="col-check"><label class="checkbox"><input type="checkbox" id="selectAll" aria-label="Select all"></label></th>
+                <th class="is-sortable" data-sort="name" style="cursor:pointer;">BFM <span class="th-sort"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 16-4 4-4-4" /> <path d="M17 20V4" /> <path d="m3 8 4-4 4 4" /> <path d="M7 4v16" /></svg></span></th>
+                <th class="is-sortable" data-sort="position" style="cursor:pointer;">Position <span class="th-sort"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 16-4 4-4-4" /> <path d="M17 20V4" /> <path d="m3 8 4-4 4 4" /> <path d="M7 4v16" /></svg></span></th>
+                <th class="is-sortable" data-sort="employment" style="cursor:pointer;">Employment <span class="th-sort"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 16-4 4-4-4" /> <path d="M17 20V4" /> <path d="m3 8 4-4 4 4" /> <path d="M7 4v16" /></svg></span></th>
+                <th>Account</th>
+                <th style="width:52px;"></th>
+              </tr>
+            </thead>
+            <tbody id="bfmTbody"></tbody>
+          </table>
+        </div>
+        <div id="bfmEmpty" hidden>
+          <div class="empty-state" style="padding:var(--space-6) 0;">
+            <div class="empty-art"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></svg></div>
+            <h2>No BFMs match your filters</h2>
+            <p>Try a different search term, or clear the position and employment filters.</p>
+            <button class="btn btn-soft" id="clearFiltersBtn">Clear filters</button>
+          </div>
+        </div>
+        <div class="pagination"><span class="page-info" id="bfmPageInfo">Showing 10 of 10</span></div>
+
+      </div>
+
+      <footer class="app-footer">
+        Copyright 2026 <a href="#">Skypoint</a>. All rights reserved.
+      </footer>
+    </main>
+
+  </div>
+
+  <div class="drawer" id="profileDrawer" hidden aria-label="BFM profile"></div>
+  <div class="overlay" id="alertOverlay" hidden></div>
+  <div class="overlay" id="modalOverlay" hidden></div>
+  <div id="toastHost" style="position:fixed;right:var(--space-5);bottom:var(--space-5);z-index:1300;display:flex;flex-direction:column;gap:var(--space-2);"></div>
+
+  <script src="./bfms.js"></script>
+  <script src="./bfms-profile.js"></script>
+  <script src="./bfms-forms.js"></script>
+</body>
+</html>

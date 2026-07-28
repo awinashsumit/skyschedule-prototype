@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<!--
+  skySchedule - Schedule (consolidated)
+  Merges v1's Schedule + Create Batch Shifts + Shifts sidebar destinations into
+  one section: Grid (roster) / List (shift records) as view modes, and a single
+  Create Shift flow (single or multiple) instead of a separate batch-create page.
+-->
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>skySchedule - Schedule</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./dashboard.css?v=2" />
+  <style>
+    .dropdown-menu[hidden], .popover[hidden], .overlay[hidden], .dialog-footer[hidden] { display: none; }
+    .dropdown-menu button.list-item, .popover button.list-item { appearance: none; border: 0; background: transparent;
+      font: inherit; cursor: pointer; text-align: left; width: 100%; }
+    .overlay[hidden] { display: none; }
+    .dialog-footer[hidden] { display: none; }
+    .dropdown-menu a.list-item, .dropdown-menu button.list-item { text-decoration: none; width: 100%; text-align: left; background: transparent; border: 0; font: inherit; cursor: pointer; }
+    button.dropdown { appearance: none; border: 0; font: inherit; cursor: pointer; }
+    .popover button.list-item { appearance: none; border: 0; background: transparent; font: inherit; cursor: pointer; text-align: left; width: 100%; }
+    .app-header.is-dark .dropdown-menu { color: var(--fg-high); }
+    .app-header.is-dark .dropdown-menu a.list-item { color: var(--fg-high); }
+    .app-header.is-dark .dropdown-menu .input { background: var(--color-surface); color: var(--fg-high); box-shadow: inset 0 0 0 1px var(--border-ui); }
+    .app-header.is-dark .dropdown-menu .input::placeholder { color: var(--fg-subtle); }
+    .app-header.is-dark .dropdown-menu .input:focus { box-shadow: inset 0 0 0 1px var(--accent-8); }
+    .app-header.is-dark .dropdown-menu .search .search-icon { color: var(--fg-subtle); }
+
+    /* ---- Roster grid (page-specific: two-axis-frozen matrix, not a shared DS pattern) */
+    .roster-wrap { overflow: auto; max-height: 620px; }
+    .roster-table { min-width: 920px; }
+    /* Sticky first column applies to per-row identity cells only. The role-group
+       row's single td spans colspan="8" (a full-width banner, not a column value) -
+       it would also match a bare :first-child selector, which pinned that whole wide
+       cell to left:0 and tore it away from the rest of its row on horizontal scroll. */
+    .roster-table th:first-child, .roster-table tbody tr:not(.role-row) td:first-child { position: sticky; left: 0; z-index: 2; background: var(--color-panel-solid); box-shadow: 1px 0 0 var(--border-subtle); }
+    .roster-table thead th:first-child { z-index: 3; background: var(--gray-2); }
+    .roster-table th { vertical-align: bottom; }
+    .day-head { display: flex; flex-direction: column; gap: 2px; padding: var(--space-2) 0; }
+    .day-bar { height: 3px; border-radius: var(--radius-full); background: var(--green-9); }
+    .day-bar.is-today { background: var(--accent-9); }
+    .day-num { font-size: var(--fs-4); font-weight: var(--weight-bold); color: var(--fg-high); }
+    .day-dow { font-size: var(--fs-1); color: var(--fg-low); font-weight: var(--weight-regular); }
+    .totals-row td { background: var(--gray-2); color: var(--fg-low); font-size: var(--fs-1); padding: var(--space-2) var(--space-4); border-bottom: var(--stroke-thin) solid var(--border-subtle); }
+    .open-row td { background: var(--warning-bg); vertical-align: top; padding: var(--space-2) var(--space-3); }
+    .open-row .oc-label { color: var(--warning-text); font-weight: var(--weight-medium); font-size: var(--fs-2); }
+    .open-row .oc-hint { color: var(--fg-low); font-size: var(--fs-1); }
+    .role-row td { background: var(--gray-2); cursor: pointer; padding: var(--space-2) var(--space-4); border-bottom: var(--stroke-thin) solid var(--border-subtle); border-top: var(--stroke-thin) solid var(--border-subtle); user-select: none; }
+    /* The role-row's <td> spans colspan="8" and scrolls normally (see the note
+       above on why it can't be sticky itself); this inner label is what stays
+       pinned to the visible left edge while the row scrolls under it. */
+    .role-row-inner { position: sticky; left: var(--space-4); display: flex; align-items: center; gap: var(--space-2); font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-high); width: fit-content; }
+    .role-row-inner .rc-chevron { color: var(--fg-subtle); transition: transform .12s; }
+    .role-row.is-collapsed .rc-chevron { transform: rotate(-90deg); }
+    .role-row .rc-count { color: var(--fg-low); font-weight: var(--weight-regular); }
+    .staff-row.is-hidden { display: none; }
+    .staff-cell { display: flex; flex-direction: column; gap: 2px; padding: var(--space-2) var(--space-4); }
+    .staff-name { font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-high); }
+    .day-cell { vertical-align: top; padding: var(--space-2); border-bottom: var(--stroke-thin) solid var(--border-subtle); min-width: 130px; }
+    .shift-chip { display: block; border-radius: var(--radius-2); padding: 6px 8px; font-size: var(--fs-1); line-height: 1.35; cursor: pointer; }
+    .shift-chip.is-confirmed { background: var(--success-bg); color: var(--success-text); box-shadow: inset 0 0 0 1px var(--green-6); }
+    .shift-chip.is-draft { background: var(--gray-3); color: var(--fg-low); box-shadow: inset 0 0 0 1px var(--border-ui); }
+    .shift-chip:hover { filter: brightness(0.97); }
+    .shift-chip .sc-time { font-weight: var(--weight-medium); display: block; }
+    .open-chip { display: block; border-radius: var(--radius-2); padding: 6px 8px; font-size: var(--fs-1); background: var(--color-panel-solid); box-shadow: inset 0 0 0 1px var(--warning-border); color: var(--warning-text); cursor: pointer; }
+    .open-chip:hover { background: var(--warning-bg); }
+    .shift-chip:focus-visible, .open-chip:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--color-page), 0 0 0 4px var(--focus-ring); }
+
+    /* ---- Day view: role groups as flex rows (not a table). Reuses the
+       .role-row/.staff-row marker classes for collapse behavior + the
+       .shift-chip look from Week, so all three views read as one family. */
+    .role-row-flat { display: flex; align-items: center; gap: var(--space-2); background: var(--gray-2); cursor: pointer; user-select: none; padding: var(--space-3) var(--space-4); border-top: var(--stroke-thin) solid var(--border-subtle); border-bottom: var(--stroke-thin) solid var(--border-subtle); font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-high); }
+    .staff-row-flat { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: var(--stroke-thin) solid var(--border-subtle); }
+    .staff-row-flat .sr-person { display: flex; align-items: center; gap: var(--space-3); }
+
+    /* ---- Month view: a plain CSS-grid calendar; only the loaded week has data */
+    .month-cell:hover[data-day-index] { background: var(--gray-2) !important; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+
+    <header class="app-header is-dark">
+      <div class="brand">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect width="24" height="24" rx="6" fill="var(--accent-9)"/><text x="12" y="16.5" text-anchor="middle" font-size="13" font-weight="700" fill="var(--accent-contrast)">S</text></svg>
+        <span>skySchedule</span>
+      </div>
+      <div class="search" style="flex:1;max-width:520px;margin:0 var(--space-4);">
+        <span class="search-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></svg></span>
+        <input class="input" placeholder="Search shifts, BFMs, locations..." />
+      </div>
+      <div class="header-right">
+        <span style="position:relative;">
+          <button class="dropdown" data-loc-toggle aria-expanded="false" style="min-width:0;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /> <circle cx="12" cy="10" r="3" /></svg>
+            skypoint
+            <span class="dropdown-chevron"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5" /> <path d="m7 9 5-5 5 5" /></svg></span>
+          </button>
+          <div class="dropdown-menu" id="locMenu" hidden style="position:absolute;right:0;top:calc(100% + 8px);z-index:50;min-width:260px;">
+            <div class="search" style="margin:var(--space-1) var(--space-1) var(--space-2);">
+              <span class="search-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></svg></span>
+              <input class="input" id="locSearch" placeholder="Search locations..." />
+            </div>
+            <a class="list-item" href="#">All my locations</a>
+            <div class="list-item is-header">Locations</div>
+            <div class="scroll-area" id="locList" style="max-height:288px;overflow:auto;">
+              <a class="list-item" href="#">community reflect</a>
+              <a class="list-item" href="#">Sky Test</a>
+              <a class="list-item" href="#">Browser testing claude</a>
+              <a class="list-item" href="#">Test Reflect</a>
+              <a class="list-item" href="#">Claude Test Community</a>
+              <a class="list-item" href="#">QA Onboarding Test</a>
+              <a class="list-item" href="#">Skypoint-Test</a>
+              <a class="list-item" href="#">Demo Senior Living QA</a>
+              <a class="list-item is-selected" href="#"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg> skypoint</a>
+            </div>
+          </div>
+        </span>
+        <button class="icon-btn" aria-label="Notifications, 3 unread"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0" /> <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></svg><span class="ic-badge">3</span></button>
+        <button class="icon-btn" aria-label="Toggle theme" data-theme-toggle><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg></button>
+        <span class="divider-v"></span>
+        <span class="header-user"><span class="avatar">SA</span><span>Sumit Awinash</span></span>
+      </div>
+    </header>
+
+    <nav class="app-sidebar" aria-label="Primary">
+      <button class="sidebar-toggle" aria-label="Collapse navigation">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" /></svg>
+      </button>
+
+      <div class="nav-section">Workspace</div>
+      <a class="nav-item" href="dashboard.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1" /> <rect width="7" height="5" x="14" y="3" rx="1" /> <rect width="7" height="9" x="14" y="12" rx="1" /> <rect width="7" height="5" x="3" y="16" rx="1" /></svg>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a class="nav-item is-active" href="schedule.html" aria-current="page">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4" /> <path d="M16 2v4" /> <rect width="18" height="18" x="3" y="4" rx="2" /> <path d="M3 10h18" /></svg>
+        <span class="nav-label">Schedule</span>
+      </a>
+      <a class="nav-item" href="bfms.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /> <path d="M16 3.128a4 4 0 0 1 0 7.744" /> <path d="M22 21v-2a4 4 0 0 0-3-3.87" /> <circle cx="9" cy="7" r="4" /></svg>
+        <span class="nav-label">BFMs</span>
+      </a>
+      <a class="nav-item" href="communications.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" /></svg>
+        <span class="nav-label">Communications</span>
+      </a>
+      <a class="nav-item" href="community.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" /> <path d="M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14" /> <path d="M8 6v8" /></svg>
+        <span class="nav-label">Community</span>
+      </a>
+
+      <div class="nav-section">Assistant</div>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /> <path d="M20 2v4" /> <path d="M22 4h-4" /> <circle cx="4" cy="20" r="2" /></svg>
+        <span class="nav-label">skyAgent</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 18V5" /> <path d="M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4" /> <path d="M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5" /> <path d="M17.997 5.125a4 4 0 0 1 2.526 5.77" /> <path d="M18 18a4 4 0 0 0 2-7.464" /> <path d="M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517" /> <path d="M6 18a4 4 0 0 1-2-7.464" /> <path d="M6.003 5.125a4 4 0 0 0-2.526 5.77" /></svg>
+        <span class="nav-label">skyBrain</span>
+      </a>
+
+      <div class="nav-section">Settings</div>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /> <circle cx="12" cy="10" r="3" /></svg>
+        <span class="nav-label">Locations</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /> <rect width="20" height="14" x="2" y="6" rx="2" /></svg>
+        <span class="nav-label">Positions</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18" /> <path d="M3 12h18" /> <rect x="3" y="3" width="18" height="18" rx="2" /></svg>
+        <span class="nav-label">Groups</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
+        <span class="nav-label">HRIS</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0" /> <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></svg>
+        <span class="nav-label">Notifications</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /> <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /> <path d="M12 17h.01" /></svg>
+        <span class="nav-label">Help &amp; Support</span>
+      </a>
+
+    </nav>
+
+    <main class="app-content">
+      <div class="content-body">
+
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4);">
+          <header class="page-header">
+            <h1>Schedule</h1>
+            <p>Build the roster, review shift records, and publish coverage for skypoint.</p>
+          </header>
+          <button class="btn btn-solid" id="createShiftMain">
+            <svg class="btn-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /> <path d="M12 5v14" /></svg>
+            Create shift
+          </button>
+        </div>
+
+        <!-- View switch: Grid (roster) vs List (shift records) - replaces the old
+             separate "Shifts" sidebar destination -->
+        <div style="display:flex;align-items:center;gap:var(--space-3);margin:var(--space-4) 0;">
+          <div class="segmented" role="tablist" aria-label="Schedule view">
+            <button class="segmented-item is-active" role="tab" aria-selected="true" data-view="grid">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M3 9h18" /> <path d="M9 21V9" /></svg>
+              Grid
+            </button>
+            <button class="segmented-item" role="tab" aria-selected="false" data-view="list">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 5h8" /> <path d="M13 12h8" /> <path d="M13 19h8" /> <path d="m3 17 2 2 4-4" /> <path d="m3 7 2 2 4-4" /></svg>
+              List
+            </button>
+          </div>
+        </div>
+
+        <!-- ======================= GRID VIEW ======================= -->
+        <div id="view-grid">
+
+          <section class="card" style="padding:0;">
+            <!-- One toolbar. Left navigates time, right finds and acts, which is
+                 the split both reference calendars use. Density is a dropdown
+                 rather than three buttons, and the role filter lives inside
+                 Filters instead of sitting beside it as a second filter. -->
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--border-subtle);">
+              <button class="btn btn-surface is-sm" id="dateToday">Today</button>
+              <button class="btn btn-ghost is-sm is-icon" id="datePrev" aria-label="Previous week"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6" /></svg></button>
+              <button class="btn btn-ghost is-sm is-icon" id="dateNext" aria-label="Next week"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg></button>
+              <span class="t-3 fw-medium" style="color:var(--fg-high);margin-left:var(--space-1);" id="dateRangeLabel">This week, Jul 26 to Aug 1</span>
+
+              <span style="position:relative;margin-left:var(--space-2);">
+                <button class="dropdown" id="densityToggle" aria-expanded="false" style="min-width:0;">
+                  <span id="densityLabel">Week</span>
+                  <span class="dropdown-chevron"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg></span>
+                </button>
+                <div class="dropdown-menu" id="densityMenu" hidden style="position:absolute;left:0;top:calc(100% + 6px);z-index:50;min-width:150px;">
+                  <button class="list-item" data-density="day">Day</button>
+                  <button class="list-item is-selected" data-density="week">Week</button>
+                  <button class="list-item" data-density="month">Month</button>
+                </div>
+              </span>
+
+              <span style="flex:1;"></span>
+
+              <div class="search" style="min-width:190px;">
+                <span class="search-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></svg></span>
+                <input class="input" id="memberSearch" placeholder="Search member" />
+              </div>
+
+              <span style="position:relative;">
+                <button class="btn btn-surface is-sm" id="filterToggle" aria-expanded="false">
+                  <svg class="btn-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54z" /></svg>
+                  Filter <span class="badge is-neutral" id="filterCount" hidden style="margin-left:4px;">1</span>
+                </button>
+                <div class="popover" id="filterMenu" hidden style="position:absolute;right:0;top:calc(100% + 6px);z-index:50;min-width:240px;">
+                  <label class="field" style="margin-bottom:var(--space-3);"><span class="field-label">Role</span>
+                    <select class="select" id="roleFilter">
+                      <option value="">All roles</option>
+                      <option>Daily Labour</option>
+                      <option>Dishwasher</option>
+                      <option>Administrative Assistant</option>
+                      <option>Bread Basket Coordinator</option>
+                      <option>Cook</option>
+                      <option>Certified Caregiver</option>
+                    </select></label>
+                  <label class="field" style="margin-bottom:var(--space-3);"><span class="field-label">Shift status</span>
+                    <select class="select" id="statusFilter">
+                      <option value="">Any status</option>
+                      <option>Confirmed</option>
+                      <option>Draft</option>
+                      <option>Open</option>
+                    </select></label>
+                  <button class="btn btn-ghost is-sm" id="clearFilters" style="width:100%;justify-content:center;">Clear filters</button>
+                </div>
+              </span>
+
+              <button class="btn btn-soft is-sm" id="publishBtn">Publish</button>
+
+              <span style="position:relative;">
+                <button class="btn btn-surface is-sm is-icon" id="scheduleMoreBtn" aria-label="More actions" aria-expanded="false">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1" /> <circle cx="19" cy="12" r="1" /> <circle cx="5" cy="12" r="1" /></svg>
+                </button>
+                <div class="dropdown-menu" id="scheduleMoreMenu" hidden style="position:absolute;right:0;top:calc(100% + 6px);z-index:50;min-width:210px;">
+                  <div class="list-item is-header">Grid layout</div>
+                  <button class="list-item is-selected" data-mode="advanced">By staff member</button>
+                  <button class="list-item" data-mode="position">By position</button>
+                  <div class="divider" style="margin:var(--space-1) 0;"></div>
+                  <div class="list-item is-header">Actions</div>
+                  <button class="list-item">Autofill shifts</button>
+                  <button class="list-item">Select multiple</button>
+                  <a class="list-item" href="#">Templates</a>
+                  <a class="list-item" href="#">Recurring shifts</a>
+                  <a class="list-item" href="#">Staffing model</a>
+                  <a class="list-item" href="communications.html">Message the team</a>
+                </div>
+              </span>
+            </div>
+
+            <!-- Week grid: role-grouped, sticky staff column + sticky date header,
+                 collapsible role sections, Open Shifts pinned above every role. -->
+            <div id="densityWeek">
+            <div class="roster-wrap">
+              <table class="table roster-table">
+                <thead>
+                  <tr>
+                    <th style="min-width:200px;">Staff (7)</th>
+                    <th><div class="day-head"><div class="day-bar"></div><span class="day-dow">Sun</span><span class="day-num">26</span></div></th>
+                    <th><div class="day-head"><div class="day-bar is-today"></div><span class="day-dow">Mon &middot; Today</span><span class="day-num">27</span></div></th>
+                    <th><div class="day-head"><div class="day-bar"></div><span class="day-dow">Tue</span><span class="day-num">28</span></div></th>
+                    <th><div class="day-head"><div class="day-bar"></div><span class="day-dow">Wed</span><span class="day-num">29</span></div></th>
+                    <th><div class="day-head"><div class="day-bar"></div><span class="day-dow">Thu</span><span class="day-num">30</span></div></th>
+                    <th><div class="day-head"><div class="day-bar"></div><span class="day-dow">Fri</span><span class="day-num">31</span></div></th>
+                    <th><div class="day-head"><div class="day-bar"></div><span class="day-dow">Sat</span><span class="day-num">1</span></div></th>
+                  </tr>
+                </thead>
+                <tbody id="weekTbody"></tbody>
+              </table>
+            </div>
+            <div style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-3) var(--space-4);border-top:1px solid var(--border-subtle);">
+              <span style="display:flex;align-items:center;gap:6px;" class="t-1"><span style="width:10px;height:10px;border-radius:3px;background:var(--success-bg);box-shadow:inset 0 0 0 1px var(--green-6);display:inline-block;"></span> Confirmed</span>
+              <span style="display:flex;align-items:center;gap:6px;" class="t-1"><span style="width:10px;height:10px;border-radius:3px;background:var(--gray-3);box-shadow:inset 0 0 0 1px var(--border-ui);display:inline-block;"></span> Draft</span>
+              <span style="display:flex;align-items:center;gap:6px;" class="t-1"><span style="width:10px;height:10px;border-radius:3px;background:var(--warning-bg);box-shadow:inset 0 0 0 1px var(--warning-border);display:inline-block;"></span> Open</span>
+            </div>
+            </div>
+
+            <div id="densityDay" hidden></div>
+            <div id="densityMonth" hidden></div>
+
+            <div id="modePosition" hidden>
+              <div class="empty-state" style="padding:var(--space-6) 0;">
+                <div class="empty-art"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /> <rect width="20" height="14" x="2" y="6" rx="2" /></svg></div>
+                <h2>Select a position to start scheduling</h2>
+                <p>Position Scheduling groups the grid around one role at a time. Choose a position below.</p>
+                <select class="select" style="max-width:280px;margin-top:var(--space-3);">
+                  <option>Select position...</option>
+                  <option>Daily Labour</option>
+                  <option>Dishwasher</option>
+                  <option>Administrative Assistant</option>
+                  <option>Bread Basket Coordinator</option>
+                  <option>Cook</option>
+                  <option>Certified Caregiver</option>
+                </select>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- ======================= LIST VIEW ======================= -->
+        <div id="view-list" hidden>
+          <div class="tabs" role="tablist" aria-label="Shift status" style="margin-bottom:var(--space-4);">
+            <button class="tab is-active" role="tab" aria-selected="true" data-status-tab="open">Open <span class="t-1" style="color:var(--fg-subtle);">57</span></button>
+            <button class="tab" role="tab" aria-selected="false" data-status-tab="offered">Offered <span class="t-1" style="color:var(--fg-subtle);">1</span></button>
+            <button class="tab" role="tab" aria-selected="false" data-status-tab="pending">Pending approval <span class="t-1" style="color:var(--fg-subtle);">0</span></button>
+            <button class="tab" role="tab" aria-selected="false" data-status-tab="assigned">Assigned <span class="t-1" style="color:var(--fg-subtle);">111</span></button>
+            <button class="tab" role="tab" aria-selected="false" data-status-tab="completed">Completed <span class="t-1" style="color:var(--fg-subtle);">2</span></button>
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:var(--space-4);margin-bottom:var(--space-4);">
+            <label class="field" style="min-width:180px;"><span class="field-label">Position</span><select class="select"><option>All positions</option><option>Daily Labour</option><option>Dishwasher</option><option>Cook</option></select></label>
+            <label class="field" style="min-width:160px;"><span class="field-label">Shift period</span><select class="select"><option>All periods</option><option>Day</option><option>Evening</option><option>Night</option></select></label>
+            <label class="field" style="min-width:180px;"><span class="field-label">Date range</span><select class="select"><option>All dates</option><option>This week</option><option>Last week</option></select></label>
+            <label class="field" style="min-width:160px;"><span class="field-label">Call-out status</span><select class="select"><option>All reasons</option><option>Vacancy</option><option>Call-out</option></select></label>
+          </div>
+
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Position</th>
+                  <th>Start</th>
+                  <th>Reason</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="listTableBody">
+                <tr>
+                  <td class="cell-strong">Daily Labour</td>
+                  <td>Wed, Jul 22 at 4:00 PM</td>
+                  <td>Call-out</td>
+                  <td><span class="badge is-warning">Open</span></td>
+                  <td style="text-align:right;"><button class="btn btn-ghost is-sm">Edit</button> <button class="btn btn-surface is-sm">Send offers</button></td>
+                </tr>
+                <tr>
+                  <td class="cell-strong">Dishwasher</td>
+                  <td>Wed, Jul 22 at 7:00 AM</td>
+                  <td>Vacancy</td>
+                  <td><span class="badge is-warning">Open</span></td>
+                  <td style="text-align:right;"><button class="btn btn-ghost is-sm">Edit</button> <button class="btn btn-surface is-sm">Send offers</button></td>
+                </tr>
+                <tr>
+                  <td class="cell-strong">Dishwasher</td>
+                  <td>Wed, Jul 22 at 7:00 AM</td>
+                  <td>Vacancy</td>
+                  <td><span class="badge is-warning">Open</span></td>
+                  <td style="text-align:right;"><button class="btn btn-ghost is-sm">Edit</button> <button class="btn btn-surface is-sm">Send offers</button></td>
+                </tr>
+                <tr>
+                  <td class="cell-strong">Daily Labour</td>
+                  <td>Thu, Jul 16 at 7:00 AM</td>
+                  <td>Vacancy</td>
+                  <td><span class="badge is-warning">Open</span></td>
+                  <td style="text-align:right;"><button class="btn btn-ghost is-sm">Edit</button> <button class="btn btn-surface is-sm">Send offers</button></td>
+                </tr>
+                <tr>
+                  <td class="cell-strong">Prep Cook</td>
+                  <td>Sun, Jul 12 at 7:00 AM</td>
+                  <td>Vacancy</td>
+                  <td><span class="badge is-warning">Open</span></td>
+                  <td style="text-align:right;"><button class="btn btn-ghost is-sm">Edit</button> <button class="btn btn-surface is-sm">Send offers</button></td>
+                </tr>
+                <tr>
+                  <td class="cell-strong">Administrative Assistant</td>
+                  <td>Wed, Jul 8 at 9:00 AM</td>
+                  <td>Call-out</td>
+                  <td><span class="badge is-warning">Open</span></td>
+                  <td style="text-align:right;"><button class="btn btn-ghost is-sm">Edit</button> <button class="btn btn-surface is-sm">Send offers</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination"><span class="page-info" id="listPageInfo">1-6 of 57</span><span class="page-spacer"></span>
+            <button class="btn btn-surface is-sm is-icon" aria-label="Previous page" disabled><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6" /></svg></button>
+            <button class="btn btn-surface is-sm is-icon" aria-label="Next page"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg></button>
+          </div>
+        </div>
+
+      </div>
+
+      <footer class="app-footer">
+        Copyright 2026 <a href="#">Skypoint</a>. All rights reserved.
+      </footer>
+    </main>
+
+  </div>
+
+  <!-- ======================= CREATE SHIFT (single or multiple, one flow) ======================= -->
+  <div class="overlay" id="createShiftOverlay" hidden>
+    <div class="modal" style="padding:var(--space-5);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4);">
+        <span class="t-5 fw-bold">Create shift</span>
+        <button class="btn btn-ghost is-sm is-icon" id="closeCreateShift" aria-label="Close"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></button>
+      </div>
+
+      <div class="segmented" style="margin-bottom:var(--space-4);">
+        <button class="segmented-item is-active" data-shift-mode="single">Single shift</button>
+        <button class="segmented-item" data-shift-mode="multiple">Add multiple</button>
+      </div>
+
+      <!-- Single -->
+      <div id="shiftModeSingle">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-4);">
+          <label class="field"><span class="field-label">Community</span><select class="select"><option>skypoint</option></select></label>
+          <label class="field">
+            <span class="field-label">Position <span class="req">*</span></span>
+            <select class="select" id="singlePosition">
+              <option value="">Select position...</option>
+              <option>Daily Labour</option>
+              <option>Dishwasher</option>
+              <option>Administrative Assistant</option>
+              <option>Bread Basket Coordinator</option>
+              <option>Cook</option>
+              <option>Certified Caregiver</option>
+            </select>
+            <span class="field-hint is-error" id="singlePositionError" hidden>Pick a position</span>
+          </label>
+        </div>
+        <label class="field" style="margin-bottom:var(--space-1);"><span class="field-label">Shift period</span><select class="select"><option>Auto (from start time)</option><option>Day</option><option>Evening</option><option>Night</option></select></label>
+        <p class="field-hint" style="margin-bottom:var(--space-4);">Auto &middot; posts as <strong>Day</strong> (from 07:00 start)</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-4);">
+          <label class="field"><span class="field-label">Date</span><input class="input" id="singleDate" value="27/07/2026"></label>
+          <label class="field"><span class="field-label">Start time</span><input class="input" id="singleStart" value="07:00 AM"></label>
+          <label class="field"><span class="field-label">End time</span><input class="input" id="singleEnd" value="03:00 PM"></label>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-2);">
+          <label class="field"><span class="field-label">Quantity (slots)</span><input class="input" id="singleQty" value="1"></label>
+          <label class="field"><span class="field-label">Unpaid break (min)</span><input class="input" value="0"></label>
+          <label class="field"><span class="field-label">Premium pay ($)</span><input class="input" placeholder="optional"></label>
+        </div>
+        <p class="field-hint">Creates 1 open shift that staff can be offered. Overnight shifts (end before start) are supported.</p>
+      </div>
+
+      <!-- Multiple -->
+      <div id="shiftModeMultiple" hidden>
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;min-width:640px;">
+          <thead>
+            <tr class="t-1" style="color:var(--fg-subtle);text-transform:uppercase;letter-spacing:.04em;">
+              <th style="text-align:left;padding-bottom:var(--space-2);">Position</th>
+              <th style="text-align:left;padding-bottom:var(--space-2);">Date</th>
+              <th style="text-align:left;padding-bottom:var(--space-2);">Start</th>
+              <th style="text-align:left;padding-bottom:var(--space-2);">End</th>
+              <th style="text-align:left;padding-bottom:var(--space-2);">Qty</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="batchRows">
+            <tr>
+              <td style="padding:var(--space-1) var(--space-2) var(--space-1) 0;"><select class="select batch-position" style="width:150px;">
+                <option value="">Position</option>
+                <option>Daily Labour</option>
+                <option>Dishwasher</option>
+                <option>Administrative Assistant</option>
+                <option>Bread Basket Coordinator</option>
+                <option>Cook</option>
+                <option>Certified Caregiver</option>
+              </select></td>
+              <td style="padding:var(--space-1) var(--space-2);"><input class="input batch-date" style="width:110px;" value="27/07/2026"></td>
+              <td style="padding:var(--space-1) var(--space-2);"><input class="input batch-start" style="width:90px;" value="07:00 AM"></td>
+              <td style="padding:var(--space-1) var(--space-2);"><input class="input batch-end" style="width:90px;" value="03:00 PM"></td>
+              <td style="padding:var(--space-1) var(--space-2);"><input class="input batch-qty" style="width:56px;" value="1"></td>
+              <td style="padding:var(--space-1) 0;"><button class="btn btn-ghost is-sm is-icon" aria-label="Remove row" data-remove-row><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></button></td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+        <button class="btn btn-ghost is-sm" id="addBatchRow" style="margin-top:var(--space-2);">
+          <svg class="btn-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /> <path d="M12 5v14" /></svg>
+          Add another shift
+        </button>
+        <p class="field-hint is-error" id="batchError" hidden style="margin-top:var(--space-2);"></p>
+      </div>
+
+      <div class="dialog-footer" id="singleFooter">
+        <button class="btn btn-soft" data-close-modal>Cancel</button>
+        <button class="btn btn-solid" id="singleSubmitBtn">Create shift</button>
+      </div>
+      <div class="dialog-footer" id="multipleFooter" hidden style="justify-content:space-between;align-items:center;">
+        <span class="t-2" style="color:var(--fg-low);">Creating <strong id="batchCount">0</strong> shift<span id="batchCountPlural">s</span></span>
+        <span style="display:flex;gap:var(--space-2);">
+          <button class="btn btn-soft" data-close-modal>Cancel</button>
+          <button class="btn btn-solid" id="multipleSubmitBtn">Confirm booking</button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastHost" style="position:fixed;right:var(--space-5);bottom:var(--space-5);z-index:1100;display:flex;flex-direction:column;gap:var(--space-2);"></div>
+
+  <script>
+    (function(){
+      // ---- Shared schedule data: Week's HTML above is hand-authored from this
+      // exact same data, so Day and Month (rendered from it) never disagree with Week. ----
+      var ROLES = ['Daily Labour', 'Dishwasher', 'Administrative Assistant', 'Bread Basket Coordinator', 'Cook', 'Certified Caregiver'];
+      var STAFF = [
+        { name: 'Anush Kulal', role: 'Daily Labour', avatar: 'c5', initials: 'AK' },
+        { name: 'Sahu Sahu', role: 'Dishwasher', avatar: 'c3', initials: 'SS' },
+        { name: 'Saumaya Surabhi', role: 'Administrative Assistant', avatar: 'c7', initials: 'SS' },
+        { name: 'Keerthana M', role: 'Bread Basket Coordinator', avatar: 'c1', initials: 'KM' },
+        { name: 'Vidya P B', role: 'Bread Basket Coordinator', avatar: 'c2', initials: 'VP' },
+        { name: 'Priya Desai', role: 'Cook', avatar: 'c4', initials: 'PD' },
+        { name: 'Ravi Menon', role: 'Cook', avatar: 'c6', initials: 'RM' },
+        { name: 'Meera Nair', role: 'Certified Caregiver', avatar: 'c8', initials: 'MN' }
+      ];
+      // day: 0=Sun 26 .. 6=Sat Aug 1, matching the Week grid's columns exactly
+      var SHIFTS = [
+        { staff: 'Anush Kulal', day: 1, start: '7:00', end: '3:00 PM', status: 'confirmed' },
+        { staff: 'Anush Kulal', day: 5, start: '7:00', end: '3:00 PM', status: 'draft' },
+        { staff: 'Sahu Sahu', day: 1, start: '7:00', end: '3:00 PM', status: 'confirmed' },
+        { staff: 'Saumaya Surabhi', day: 6, start: '7:00', end: '3:00 PM', status: 'confirmed' },
+        { staff: 'Keerthana M', day: 2, start: '9:00', end: '5:00 PM', status: 'draft' },
+        { staff: 'Priya Desai', day: 4, start: '3:00', end: '11:00 PM', status: 'confirmed' },
+        { staff: 'Ravi Menon', day: 0, start: '11:00', end: '7:00 PM', status: 'confirmed' },
+        { staff: 'Meera Nair', day: 2, start: '7:00', end: '3:00 PM', status: 'confirmed' }
+      ];
+      var OPEN_SHIFTS = [
+        { position: 'Cook', day: 2, start: '4:00', end: '10:00 PM' },
+        { position: 'Dishwasher', day: 4, start: '7:00 AM', end: '3:00 PM' }
+      ];
+      var DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      var DAY_DATES = ['Jul 26', 'Jul 27', 'Jul 28', 'Jul 29', 'Jul 30', 'Jul 31', 'Aug 1'];
+      var TOTAL_HRS = ['—', '16.0h', '8.0h', '8.0h', '8.0h', '—', '8.0h'];
+      var TODAY_INDEX = 1;
+      var currentDensity = 'week';
+      var currentDayIndex = TODAY_INDEX;
+
+      function dayHeading(idx) {
+        var h = DAY_LABELS[idx] + ', ' + DAY_DATES[idx];
+        if (idx === TODAY_INDEX) h += ' · Today';
+        return h;
+      }
+
+      function avatarSpan(person) {
+        return '<span class="avatar ' + person.avatar + '" style="width:28px;height:28px;font-size:11px;flex:none;">' + person.initials + '</span>';
+      }
+
+      // Chip markup shared by Week's table cells and Day's flex rows, so a
+      // shift looks identical (and carries the same click target) in both.
+      function assignedChipHTML(shift) {
+        return '<span class="shift-chip is-' + shift.status + '" data-chip="assigned" data-staff="' + shift.staff + '" data-day="' + shift.day + '" tabindex="0" role="button">' +
+          '<span class="sc-time">' + shift.start + '-' + shift.end + '</span>' + shift.status + '</span>';
+      }
+      function openChipHTML(o) {
+        return '<span class="open-chip" data-chip="open" data-position="' + o.position + '" data-day="' + o.day + '" tabindex="0" role="button">' +
+          o.position + '<br><span style="font-weight:500;">' + o.start + '-' + o.end + '</span></span>';
+      }
+
+      // Week grid: rendered from the same SHIFTS/OPEN_SHIFTS/STAFF data as Day
+      // and Month, so assigning a shift anywhere keeps all three in agreement.
+      function renderWeekView() {
+        var html = '';
+        html += '<tr class="totals-row"><td>Total hrs</td>' + TOTAL_HRS.map(function(h){ return '<td>' + h + '</td>'; }).join('') + '</tr>';
+
+        html += '<tr class="open-row"><td><span class="oc-label">Open Shifts</span><br><span class="oc-hint">drag shift here to unassign</span></td>';
+        for (var d = 0; d < 7; d++) {
+          var opensToday = OPEN_SHIFTS.filter(function(o){ return o.day === d; });
+          html += '<td>' + opensToday.map(openChipHTML).join('') + '</td>';
+        }
+        html += '</tr>';
+
+        ROLES.forEach(function(role){
+          var members = STAFF.filter(function(s){ return s.role === role; });
+          if (!members.length) return;
+          html += '<tr class="role-row" data-role="' + role + '"><td colspan="8"><span class="role-row-inner">' +
+            '<svg class="rc-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg> ' +
+            role + ' <span class="rc-count">&middot; ' + members.length + '</span></span></td></tr>';
+          members.forEach(function(m){
+            html += '<tr class="staff-row" data-role="' + role + '"><td><div class="staff-cell"><span class="staff-name">' + m.name + '</span></div></td>';
+            for (var d2 = 0; d2 < 7; d2++) {
+              var shift = SHIFTS.filter(function(s){ return s.staff === m.name && s.day === d2; })[0];
+              html += '<td class="day-cell">' + (shift ? assignedChipHTML(shift) : '') + '</td>';
+            }
+            html += '</tr>';
+          });
+        });
+        document.getElementById('weekTbody').innerHTML = html;
+      }
+
+      function renderDayView(idx) {
+        currentDayIndex = idx;
+        var openForDay = OPEN_SHIFTS.filter(function(o){ return o.day === idx; });
+        var html = '';
+        if (openForDay.length) {
+          html += '<div style="padding:var(--space-4);background:var(--warning-bg);border-bottom:1px solid var(--border-subtle);">';
+          html += '<div class="t-2 fw-medium" style="color:var(--warning-text);margin-bottom:var(--space-2);">Open Shifts</div>';
+          openForDay.forEach(function(o){
+            html += '<div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) 0;">' +
+              '<span class="badge is-warning">Open</span>' +
+              '<span class="t-2" style="color:var(--fg-high);flex:1;">' + o.position + ' · ' + o.start + '-' + o.end + '</span>' +
+              '<button class="btn btn-surface is-sm" data-chip="open" data-position="' + o.position + '" data-day="' + o.day + '">Assign</button></div>';
+          });
+          html += '</div>';
+        }
+        ROLES.forEach(function(role){
+          var members = STAFF.filter(function(s){ return s.role === role; });
+          if (!members.length) return;
+          html += '<div class="role-row role-row-flat" data-role="' + role + '">' +
+            '<svg class="rc-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg> ' +
+            role + ' <span class="rc-count">· ' + members.length + '</span></div>';
+          members.forEach(function(m){
+            var shift = SHIFTS.filter(function(s){ return s.staff === m.name && s.day === idx; })[0];
+            html += '<div class="staff-row staff-row-flat" data-role="' + role + '">' +
+              '<span class="sr-person">' + avatarSpan(m) + '<span class="t-2 fw-medium" style="color:var(--fg-high);">' + m.name + '</span></span>';
+            if (shift) {
+              html += assignedChipHTML(shift);
+            } else {
+              html += '<span class="t-2" style="color:var(--fg-subtle);">No shift</span>';
+            }
+            html += '</div>';
+          });
+        });
+        document.getElementById('densityDay').innerHTML = html;
+      }
+
+      function renderMonthView() {
+        var weeks = [
+          [null, null, null, 1, 2, 3, 4],
+          [5, 6, 7, 8, 9, 10, 11],
+          [12, 13, 14, 15, 16, 17, 18],
+          [19, 20, 21, 22, 23, 24, 25],
+          [26, 27, 28, 29, 30, 31, '1A']
+        ];
+        var html = '<div style="padding:var(--space-4);">';
+        html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border-subtle);box-shadow:inset 0 0 0 1px var(--border-subtle);border-radius:var(--radius-3);overflow:hidden;">';
+        DAY_LABELS.forEach(function(d){
+          html += '<div style="background:var(--gray-2);padding:var(--space-2);text-align:center;font-size:var(--fs-1);font-weight:var(--weight-medium);color:var(--fg-low);">' + d + '</div>';
+        });
+        weeks.forEach(function(row){
+          row.forEach(function(cell){
+            if (cell === null) { html += '<div style="background:var(--color-page);min-height:92px;"></div>'; return; }
+            var isAug = cell === '1A';
+            var num = isAug ? 1 : cell;
+            var idx = isAug ? 6 : (cell >= 26 ? cell - 26 : null);
+            var isToday = cell === 27;
+            var style = 'background:var(--color-panel-solid);min-height:92px;padding:var(--space-2);cursor:' + (idx !== null ? 'pointer' : 'default') + ';';
+            if (isToday) style += 'box-shadow:inset 0 0 0 2px var(--accent-9);';
+            html += '<div class="month-cell"' + (idx !== null ? ' data-day-index="' + idx + '"' : '') + ' style="' + style + '">';
+            html += '<div class="t-2" style="color:' + (idx !== null ? 'var(--fg-high)' : 'var(--fg-subtle)') + ';font-weight:' + (isToday ? '700' : '500') + ';">' + num + (isAug ? ' Aug' : '') + '</div>';
+            if (idx !== null) {
+              var confirmed = SHIFTS.filter(function(s){ return s.day === idx && s.status === 'confirmed'; }).length;
+              var draft = SHIFTS.filter(function(s){ return s.day === idx && s.status === 'draft'; }).length;
+              var open = OPEN_SHIFTS.filter(function(o){ return o.day === idx; }).length;
+              html += '<div style="display:flex;flex-direction:column;gap:2px;margin-top:var(--space-1);">';
+              if (confirmed) html += '<span class="t-1" style="color:var(--success-text);">● ' + confirmed + ' confirmed</span>';
+              if (draft) html += '<span class="t-1" style="color:var(--fg-low);">● ' + draft + ' draft</span>';
+              if (open) html += '<span class="t-1" style="color:var(--warning-text);">● ' + open + ' open</span>';
+              html += '</div>';
+            }
+            html += '</div>';
+          });
+        });
+        html += '</div></div>';
+        document.getElementById('densityMonth').innerHTML = html;
+        document.querySelectorAll('.month-cell[data-day-index]').forEach(function(c){
+          c.addEventListener('click', function(){
+            currentDayIndex = parseInt(c.getAttribute('data-day-index'), 10);
+            document.querySelector('#densityMenu [data-density="day"]').click();
+          });
+        });
+      }
+
+      function updateDateLabel() {
+        var label = document.getElementById('dateRangeLabel');
+        var prevBtn = document.getElementById('datePrev');
+        var nextBtn = document.getElementById('dateNext');
+        if (currentDensity === 'week') {
+          label.textContent = 'This week, Jul 26 to Aug 1';
+          prevBtn.disabled = false; nextBtn.disabled = false;
+          prevBtn.setAttribute('aria-label', 'Previous week'); nextBtn.setAttribute('aria-label', 'Next week');
+        } else if (currentDensity === 'day') {
+          label.textContent = dayHeading(currentDayIndex);
+          prevBtn.disabled = (currentDayIndex === 0); nextBtn.disabled = (currentDayIndex === 6);
+          prevBtn.setAttribute('aria-label', 'Previous day'); nextBtn.setAttribute('aria-label', 'Next day');
+        } else if (currentDensity === 'month') {
+          label.textContent = 'July 2026';
+          prevBtn.disabled = true; nextBtn.disabled = true;
+        }
+      }
+
+      var btn = document.querySelector('[data-theme-toggle]');
+      if (btn) btn.addEventListener('click', function(){
+        var h = document.documentElement;
+        h.setAttribute('data-theme', h.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+      });
+
+      var lt = document.querySelector('[data-loc-toggle]'), lm = document.getElementById('locMenu');
+      if (lt && lm) {
+        lt.addEventListener('click', function(e){ e.stopPropagation(); lm.hidden = !lm.hidden; lt.setAttribute('aria-expanded', String(!lm.hidden)); });
+        document.addEventListener('click', function(){ lm.hidden = true; lt.setAttribute('aria-expanded','false'); });
+      }
+      var ls = document.getElementById('locSearch'), ll = document.getElementById('locList');
+      if (ls && ll) {
+        ls.addEventListener('input', function(){
+          var q = ls.value.trim().toLowerCase();
+          ll.querySelectorAll('.list-item').forEach(function(it){ it.hidden = q !== '' && it.textContent.toLowerCase().indexOf(q) === -1; });
+        });
+      }
+
+      // Grid / List view switch
+      document.querySelectorAll('.segmented-item[data-view]').forEach(function(seg){
+        seg.addEventListener('click', function(){
+          document.querySelectorAll('.segmented-item[data-view]').forEach(function(s){ s.classList.remove('is-active'); s.setAttribute('aria-selected','false'); });
+          seg.classList.add('is-active'); seg.setAttribute('aria-selected','true');
+          var v = seg.getAttribute('data-view');
+          document.getElementById('view-grid').hidden = (v !== 'grid');
+          document.getElementById('view-list').hidden = (v !== 'list');
+        });
+      });
+
+      // Grid layout (by staff member / by position) moved into the overflow:
+      // it is set once, not adjusted while working.
+      document.querySelectorAll('#scheduleMoreMenu [data-mode]').forEach(function (item) {
+        item.addEventListener('click', function (e) {
+          e.stopPropagation();
+          document.querySelectorAll('#scheduleMoreMenu [data-mode]').forEach(function (o) { o.classList.remove('is-selected'); });
+          item.classList.add('is-selected');
+          var isPosition = item.getAttribute('data-mode') === 'position';
+          document.getElementById('modePosition').hidden = !isPosition;
+          ['densityWeek', 'densityDay', 'densityMonth'].forEach(function (id) {
+            document.getElementById(id).hidden = true;
+          });
+          if (!isPosition) {
+            document.getElementById('density' + currentDensity.charAt(0).toUpperCase() + currentDensity.slice(1)).hidden = false;
+          }
+          document.getElementById('scheduleMoreMenu').hidden = true;
+        });
+      });
+
+      // Density is a dropdown now: one control instead of three buttons.
+      var densityToggle = document.getElementById('densityToggle');
+      var densityMenu = document.getElementById('densityMenu');
+      densityToggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        densityMenu.hidden = !densityMenu.hidden;
+        densityToggle.setAttribute('aria-expanded', String(!densityMenu.hidden));
+      });
+      document.addEventListener('click', function () {
+        densityMenu.hidden = true;
+        densityToggle.setAttribute('aria-expanded', 'false');
+      });
+      densityMenu.querySelectorAll('[data-density]').forEach(function (item) {
+        item.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var d = item.getAttribute('data-density');
+          currentDensity = d;
+          densityMenu.querySelectorAll('[data-density]').forEach(function (o) { o.classList.remove('is-selected'); });
+          item.classList.add('is-selected');
+          document.getElementById('densityLabel').textContent = item.textContent.trim();
+          densityMenu.hidden = true;
+          densityToggle.setAttribute('aria-expanded', 'false');
+          ['week', 'day', 'month'].forEach(function (k) {
+            document.getElementById('density' + k.charAt(0).toUpperCase() + k.slice(1)).hidden = (k !== d);
+          });
+          if (d === 'day') renderDayView(currentDayIndex);
+          if (d === 'month') renderMonthView();
+          updateDateLabel();
+        });
+      });
+
+      document.getElementById('dateToday').addEventListener('click', function(){
+        if (currentDensity === 'day') { renderDayView(TODAY_INDEX); updateDateLabel(); }
+      });
+      document.getElementById('datePrev').addEventListener('click', function(){
+        if (currentDensity === 'day' && currentDayIndex > 0) { renderDayView(currentDayIndex - 1); updateDateLabel(); }
+      });
+      document.getElementById('dateNext').addEventListener('click', function(){
+        if (currentDensity === 'day' && currentDayIndex < 6) { renderDayView(currentDayIndex + 1); updateDateLabel(); }
+      });
+
+      // ---- Click a shift chip to act on it: assign an open shift, or
+      // reassign/confirm/remove one that's already assigned. One popover,
+      // anchored to the chip, works the same way in Week, Day, and Month-drilldown. ----
+      var popoverEl = null;
+      function closePopover() { if (popoverEl) { popoverEl.remove(); popoverEl = null; } }
+
+      function refreshCurrentView() {
+        if (currentDensity === 'week') renderWeekView();
+        else if (currentDensity === 'day') renderDayView(currentDayIndex);
+        else if (currentDensity === 'month') renderMonthView();
+      }
+
+      function assignOpenShift(position, day, staffName) {
+        var i = OPEN_SHIFTS.findIndex(function(o){ return o.position === position && o.day === day; });
+        var open = OPEN_SHIFTS[i];
+        OPEN_SHIFTS.splice(i, 1);
+        SHIFTS.push({ staff: staffName, day: day, start: open.start, end: open.end, status: 'confirmed' });
+        refreshCurrentView();
+        showToast('Shift assigned', staffName + ' &middot; ' + DAY_LABELS[day] + ', ' + open.start + '-' + open.end);
+      }
+      function reassignShift(oldStaff, day, newStaff) {
+        var i = SHIFTS.findIndex(function(s){ return s.staff === oldStaff && s.day === day; });
+        var shift = SHIFTS[i];
+        SHIFTS.splice(i, 1);
+        SHIFTS.push({ staff: newStaff, day: day, start: shift.start, end: shift.end, status: shift.status });
+        refreshCurrentView();
+        showToast('Shift reassigned', newStaff + ' now covers ' + DAY_LABELS[day] + ', ' + shift.start + '-' + shift.end);
+      }
+      function confirmShift(staffName, day) {
+        var shift = SHIFTS.filter(function(s){ return s.staff === staffName && s.day === day; })[0];
+        shift.status = 'confirmed';
+        refreshCurrentView();
+        showToast('Shift confirmed', staffName + ' &middot; ' + DAY_LABELS[day]);
+      }
+      function removeShift(staffName, day) {
+        var i = SHIFTS.findIndex(function(s){ return s.staff === staffName && s.day === day; });
+        var shift = SHIFTS[i];
+        var role = STAFF.filter(function(s){ return s.name === staffName; })[0].role;
+        SHIFTS.splice(i, 1);
+        OPEN_SHIFTS.push({ position: role, day: day, start: shift.start, end: shift.end });
+        refreshCurrentView();
+        showToast('Shift removed', 'Reopened as ' + role + ' on ' + DAY_LABELS[day]);
+      }
+
+      function positionPopover(pop, anchorEl) {
+        var rect = anchorEl.getBoundingClientRect();
+        pop.style.position = 'fixed';
+        pop.style.zIndex = 1200;
+        var top = rect.bottom + 6, left = rect.left;
+        if (left + 240 > window.innerWidth) left = window.innerWidth - 248;
+        if (top + 240 > window.innerHeight) top = rect.top - 6 - 240;
+        pop.style.top = top + 'px';
+        pop.style.left = left + 'px';
+      }
+
+      function openShiftPopover(chip) {
+        closePopover();
+        var day = parseInt(chip.getAttribute('data-day'), 10);
+        var type = chip.getAttribute('data-chip');
+        var pop = document.createElement('div');
+        pop.className = 'popover';
+        pop.style.minWidth = '220px';
+
+        function renderAssignList(role, excludeName) {
+          var candidates = STAFF.filter(function(s){ return s.role === role && s.name !== excludeName; });
+          var html = '';
+          candidates.forEach(function(c){
+            html += '<button class="list-item" data-pick="' + c.name + '" style="width:100%;">' + avatarSpan(c) + '<span style="margin-left:8px;">' + c.name + '</span></button>';
+          });
+          if (!candidates.length) html += '<div class="t-1" style="color:var(--fg-subtle);padding:var(--space-2) 0;">No one else in this role.</div>';
+          return html;
+        }
+
+        if (type === 'open') {
+          var position = chip.getAttribute('data-position');
+          pop.innerHTML = '<div class="t-2 fw-medium" style="color:var(--fg-high);margin-bottom:var(--space-2);">Assign ' + position + ', ' + DAY_LABELS[day] + '</div>' + renderAssignList(position, null);
+          pop.querySelectorAll('[data-pick]').forEach(function(b){
+            b.addEventListener('click', function(e){ e.stopPropagation(); assignOpenShift(position, day, b.getAttribute('data-pick')); closePopover(); });
+          });
+        } else {
+          var staffName = chip.getAttribute('data-staff');
+          var shift = SHIFTS.filter(function(s){ return s.staff === staffName && s.day === day; })[0];
+          var role = STAFF.filter(function(s){ return s.name === staffName; })[0].role;
+          var html = '<div class="t-2 fw-medium" style="color:var(--fg-high);">' + staffName + '</div>' +
+            '<div class="t-1" style="color:var(--fg-low);margin-bottom:var(--space-2);">' + shift.start + '-' + shift.end + ' &middot; ' + shift.status + '</div>';
+          if (shift.status === 'draft') html += '<button class="list-item" data-confirm style="width:100%;">Confirm shift</button>';
+          html += '<button class="list-item" data-reassign style="width:100%;">Reassign</button>';
+          html += '<button class="list-item" data-remove style="width:100%;color:var(--danger-text);">Remove from schedule</button>';
+          pop.innerHTML = html;
+          var confirmBtn = pop.querySelector('[data-confirm]');
+          if (confirmBtn) confirmBtn.addEventListener('click', function(e){ e.stopPropagation(); confirmShift(staffName, day); closePopover(); });
+          pop.querySelector('[data-reassign]').addEventListener('click', function(e){
+            e.stopPropagation();
+            pop.innerHTML = '<div class="t-2 fw-medium" style="color:var(--fg-high);margin-bottom:var(--space-2);">Reassign to</div>' + renderAssignList(role, staffName);
+            pop.querySelectorAll('[data-pick]').forEach(function(b){
+              b.addEventListener('click', function(e2){ e2.stopPropagation(); reassignShift(staffName, day, b.getAttribute('data-pick')); closePopover(); });
+            });
+          });
+          pop.querySelector('[data-remove]').addEventListener('click', function(e){ e.stopPropagation(); removeShift(staffName, day); closePopover(); });
+        }
+
+        document.body.appendChild(pop);
+        positionPopover(pop, chip);
+        popoverEl = pop;
+        pop.addEventListener('click', function(e){ e.stopPropagation(); });
+        setTimeout(function(){ document.addEventListener('click', closePopover, { once: true }); }, 0);
+      }
+      document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closePopover(); });
+
+      // Role group collapse (delegated so it also covers Day view's
+      // dynamically-rendered rows) + shift chip clicks, on one listener
+      document.getElementById('view-grid').addEventListener('click', function(e){
+        var chip = e.target.closest('[data-chip]');
+        if (chip) { openShiftPopover(chip); return; }
+        var row = e.target.closest('.role-row');
+        if (!row) return;
+        row.classList.toggle('is-collapsed');
+        var role = row.getAttribute('data-role');
+        var hide = row.classList.contains('is-collapsed');
+        document.querySelectorAll('.staff-row[data-role="' + CSS.escape(role) + '"]').forEach(function(sr){ sr.classList.toggle('is-hidden', hide); });
+      });
+      document.getElementById('view-grid').addEventListener('keydown', function(e){
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        var chip = e.target.closest('[data-chip]');
+        if (chip && chip.getAttribute('role') === 'button') { e.preventDefault(); openShiftPopover(chip); }
+      });
+
+      // Filters live in one popover; the badge reports how many are active so
+      // a narrowed grid is never a silent state.
+      var filterToggle = document.getElementById('filterToggle');
+      var filterMenu = document.getElementById('filterMenu');
+      filterToggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        filterMenu.hidden = !filterMenu.hidden;
+        filterToggle.setAttribute('aria-expanded', String(!filterMenu.hidden));
+      });
+      filterMenu.addEventListener('click', function (e) { e.stopPropagation(); });
+      document.addEventListener('click', function () {
+        filterMenu.hidden = true;
+        filterToggle.setAttribute('aria-expanded', 'false');
+      });
+      function refreshFilterCount() {
+        var n = 0;
+        if (document.getElementById('roleFilter').value) n++;
+        if (document.getElementById('statusFilter').value) n++;
+        var badge = document.getElementById('filterCount');
+        badge.textContent = n;
+        badge.hidden = n === 0;
+      }
+      ['roleFilter', 'statusFilter'].forEach(function (id) {
+        document.getElementById(id).addEventListener('change', refreshFilterCount);
+      });
+      document.getElementById('clearFilters').addEventListener('click', function () {
+        document.getElementById('roleFilter').value = '';
+        document.getElementById('statusFilter').value = '';
+        refreshFilterCount();
+      });
+
+      // "..." overflow menu
+      var mb = document.getElementById('scheduleMoreBtn'), mm = document.getElementById('scheduleMoreMenu');
+      if (mb && mm) {
+        mb.addEventListener('click', function(e){ e.stopPropagation(); mm.hidden = !mm.hidden; mb.setAttribute('aria-expanded', String(!mm.hidden)); });
+        document.addEventListener('click', function(){ mm.hidden = true; mb.setAttribute('aria-expanded','false'); });
+      }
+
+      // List view status tabs (visual only in this mock; each tab represents a
+      // distinct server-side filter of the same shift records)
+      document.querySelectorAll('.tab[data-status-tab]').forEach(function(tab){
+        tab.addEventListener('click', function(){
+          document.querySelectorAll('.tab[data-status-tab]').forEach(function(t){ t.classList.remove('is-active'); t.setAttribute('aria-selected','false'); });
+          tab.classList.add('is-active'); tab.setAttribute('aria-selected','true');
+        });
+      });
+
+      // Create shift: one button opens the modal; Single/Multiple is chosen
+      // with the segmented control inside it (no separate chevron menu).
+      var overlay = document.getElementById('createShiftOverlay');
+      var csMain = document.getElementById('createShiftMain');
+      function openModal(mode) {
+        overlay.hidden = false;
+        setShiftMode(mode || 'single');
+      }
+      function closeModal() { overlay.hidden = true; }
+      function setShiftMode(mode) {
+        document.querySelectorAll('[data-shift-mode]').forEach(function(b){
+          b.classList.toggle('is-active', b.getAttribute('data-shift-mode') === mode);
+        });
+        document.getElementById('shiftModeSingle').hidden = (mode !== 'single');
+        document.getElementById('shiftModeMultiple').hidden = (mode !== 'multiple');
+        document.getElementById('singleFooter').hidden = (mode !== 'single');
+        document.getElementById('multipleFooter').hidden = (mode !== 'multiple');
+      }
+      if (csMain) csMain.addEventListener('click', function(){ openModal('single'); });
+      document.querySelectorAll('[data-shift-mode]').forEach(function(b){
+        b.addEventListener('click', function(){ setShiftMode(b.getAttribute('data-shift-mode')); });
+      });
+      document.getElementById('closeCreateShift').addEventListener('click', closeModal);
+      document.querySelectorAll('[data-close-modal]').forEach(function(b){ b.addEventListener('click', closeModal); });
+      overlay.addEventListener('click', function(e){ if (e.target === overlay) closeModal(); });
+      document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !overlay.hidden) closeModal(); });
+
+      // ---- Toast (visibility of system status after a real create) ----
+      var toastHost = document.getElementById('toastHost');
+      function showToast(title, body) {
+        var t = document.createElement('div');
+        t.className = 'toast';
+        t.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--success-solid)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><circle cx="12" cy="12" r="10" /> <path d="m9 12 2 2 4-4" /></svg>' +
+          '<div><div class="toast-title">' + title + '</div><div class="toast-body">' + body + '</div></div>';
+        toastHost.appendChild(t);
+        setTimeout(function(){ t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(function(){ t.remove(); }, 300); }, 3200);
+      }
+
+      // ---- Data insertion: a created shift lands in the List view immediately,
+      // and in the Grid's Open Shifts row too if its date falls in the visible week ----
+      var weekDates = { '26/07/2026': 0, '27/07/2026': 1, '28/07/2026': 2, '29/07/2026': 3, '30/07/2026': 4, '31/07/2026': 5, '01/08/2026': 6 };
+
+      function addOpenShiftToList(position, dateStr, startStr) {
+        var tbody = document.getElementById('listTableBody');
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td class="cell-strong">' + position + '</td>' +
+          '<td>' + dateStr + ' at ' + startStr + '</td>' +
+          '<td>Manual</td>' +
+          '<td><span class="badge is-warning">Open</span></td>' +
+          '<td style="text-align:right;"><button class="btn btn-ghost is-sm">Edit</button> <button class="btn btn-surface is-sm">Send offers</button></td>';
+        tbody.insertBefore(tr, tbody.firstChild);
+        var openTab = document.querySelector('.tab[data-status-tab="open"] .t-1');
+        var newTotal = parseInt(openTab.textContent, 10) + 1;
+        openTab.textContent = String(newTotal);
+        var pageInfo = document.getElementById('listPageInfo');
+        var visible = document.querySelectorAll('#listTableBody tr').length;
+        pageInfo.textContent = '1-' + visible + ' of ' + newTotal;
+      }
+
+      function addOpenShiftToGrid(position, dateStr, startStr, endStr) {
+        var col = weekDates[dateStr];
+        if (col === undefined) return; // outside the visible week; still recorded in List view
+        var cells = document.querySelectorAll('.open-row td');
+        var cell = cells[col + 1]; // +1 to skip the leading "Open Shifts" label cell
+        var chip = document.createElement('span');
+        chip.className = 'open-chip';
+        chip.innerHTML = position + '<br><span style="font-weight:500;">' + startStr + '-' + endStr + '</span>';
+        cell.appendChild(chip);
+      }
+
+      // ---- Single mode: validate Position, then create ----
+      var singlePosition = document.getElementById('singlePosition');
+      var singlePositionError = document.getElementById('singlePositionError');
+      singlePosition.addEventListener('change', function(){ if (singlePosition.value) singlePositionError.hidden = true; });
+      document.getElementById('singleSubmitBtn').addEventListener('click', function(){
+        if (!singlePosition.value) {
+          singlePositionError.hidden = false;
+          singlePosition.focus();
+          return;
+        }
+        var position = singlePosition.value;
+        var dateStr = document.getElementById('singleDate').value;
+        var startStr = document.getElementById('singleStart').value;
+        var endStr = document.getElementById('singleEnd').value;
+        var qty = parseInt(document.getElementById('singleQty').value, 10) || 1;
+        for (var i = 0; i < qty; i++) {
+          addOpenShiftToList(position, dateStr, startStr);
+          addOpenShiftToGrid(position, dateStr, startStr, endStr);
+        }
+        showToast(qty + ' shift' + (qty === 1 ? '' : 's') + ' created', position + ' &middot; ' + dateStr + ' at ' + startStr);
+        singlePosition.value = '';
+        closeModal();
+      });
+
+      // ---- Batch rows: add / remove / live count of VALID (position-picked) rows ----
+      function updateBatchCount() {
+        var rows = document.querySelectorAll('#batchRows tr');
+        var valid = Array.prototype.filter.call(rows, function(tr){ return tr.querySelector('.batch-position').value !== ''; }).length;
+        document.getElementById('batchCount').textContent = valid;
+        document.getElementById('batchCountPlural').textContent = valid === 1 ? '' : 's';
+      }
+      document.getElementById('addBatchRow').addEventListener('click', function(){
+        var first = document.querySelector('#batchRows tr');
+        var clone = first.cloneNode(true);
+        clone.querySelector('.batch-position').value = '';
+        document.getElementById('batchRows').appendChild(clone);
+        wireRow(clone);
+        updateBatchCount();
+      });
+      function wireRow(row) {
+        row.querySelector('[data-remove-row]').addEventListener('click', function(){
+          if (document.querySelectorAll('#batchRows tr').length > 1) { row.remove(); updateBatchCount(); }
+        });
+        row.querySelector('.batch-position').addEventListener('change', function(){
+          document.getElementById('batchError').hidden = true;
+          updateBatchCount();
+        });
+      }
+      document.querySelectorAll('#batchRows tr').forEach(wireRow);
+      updateBatchCount();
+
+      document.getElementById('multipleSubmitBtn').addEventListener('click', function(){
+        var rows = document.querySelectorAll('#batchRows tr');
+        var missing = [];
+        rows.forEach(function(tr, i){ if (!tr.querySelector('.batch-position').value) missing.push(i + 1); });
+        var errEl = document.getElementById('batchError');
+        if (missing.length) {
+          errEl.hidden = false;
+          errEl.textContent = 'Line ' + missing.join(', ') + ': pick a position before confirming.';
+          return;
+        }
+        errEl.hidden = true;
+        var created = 0;
+        var template = rows[0].cloneNode(true);
+        rows.forEach(function(tr){
+          var position = tr.querySelector('.batch-position').value;
+          var dateStr = tr.querySelector('.batch-date').value;
+          var startStr = tr.querySelector('.batch-start').value;
+          var endStr = tr.querySelector('.batch-end').value;
+          var qty = parseInt(tr.querySelector('.batch-qty').value, 10) || 1;
+          for (var i = 0; i < qty; i++) {
+            addOpenShiftToList(position, dateStr, startStr);
+            addOpenShiftToGrid(position, dateStr, startStr, endStr);
+            created++;
+          }
+        });
+        showToast(created + ' shift' + (created === 1 ? '' : 's') + ' created', 'Added to the Open list and this week\'s grid.');
+        // reset to a single blank row
+        var body = document.getElementById('batchRows');
+        body.innerHTML = '';
+        template.querySelector('.batch-position').value = '';
+        body.appendChild(template);
+        wireRow(template);
+        updateBatchCount();
+        closeModal();
+      });
+
+      // Week is the default-visible density, so render it immediately
+      // (Day/Month render lazily the first time you switch to them)
+      renderWeekView();
+
+      // Deep link: schedule.html?view=list opens straight into the List view
+      // (used by the Dashboard's Shifts preview card)
+      if (/[?&]view=list/.test(location.search)) {
+        var listSeg = document.querySelector('.segmented-item[data-view="list"]');
+        if (listSeg) listSeg.click();
+      }
+    })();
+  </script>
+</body>
+</html>
