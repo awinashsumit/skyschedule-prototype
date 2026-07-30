@@ -1,0 +1,478 @@
+/* ============================================================
+   skySchedule mobile layer
+
+   Material Design 3 anatomy (navigation, sheets, touch sizing,
+   state layers) wearing the Radix skin already used on desktop.
+   Everything derives from tokens.css, so the two apps stay related.
+
+   Four deliberate departures from stock Material, decided up front:
+   1. No tonal elevation. Material tints raised surfaces with the
+      primary colour; with amber that would flood the UI with brand
+      and break the "amber is brand only" contract. We keep Radix
+      elevation: a border OR a crisp-ring shadow, never both.
+   2. Primary colour is rationed. Amber appears on the FAB and the
+      active tab indicator only, both genuinely brand/selection.
+      Status stays red / green / orange / blue.
+   3. Larger radii for mobile-only surfaces (sheets, FAB) because
+      that roundness is a big part of why Material reads as mobile.
+      Cards, buttons and inputs keep the Radix scale so the desktop
+      and mobile apps still look like siblings.
+   4. No ink ripple. A fast state layer (also a Material pattern)
+      gives touch feedback without reading as Android-only.
+   ============================================================ */
+@import url("./tokens.css");
+
+:root {
+  /* Mobile-only radii, from the M3 shape scale */
+  --m-radius-sheet: 28px;
+  --m-radius-fab: 16px;
+  --m-radius-chip: var(--radius-full);
+
+  /* Minimum comfortable touch target. Desktop used 26-32px controls;
+     both iOS and Android want 44-48px. */
+  --m-touch: 44px;
+
+  /* Fixed chrome heights, used for content padding so nothing hides
+     under the app bar or tab bar. */
+  --m-appbar-h: 56px;
+  --m-tabbar-h: 64px;
+
+  /* Safe areas: notch at top, home indicator at bottom. env() falls
+     back to 0 on browsers that do not support it. */
+  --m-safe-top: env(safe-area-inset-top, 0px);
+  --m-safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* M3 emphasized easing, inside our 120-300ms envelope */
+  --m-ease: cubic-bezier(0.2, 0, 0, 1);
+  --m-dur-short: 140ms;
+  --m-dur-medium: 240ms;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+/* Author rules set display everywhere, which outranks the browser
+   default for [hidden]. Same trap as the desktop app. */
+[hidden] { display: none !important; }
+
+html, body { height: 100%; }
+body {
+  font-family: var(--font-base);
+  font-size: var(--fs-2);
+  line-height: var(--lh-2);
+  color: var(--fg-high);
+  background: var(--color-page);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;      /* no rubber-band on the page itself */
+  -webkit-tap-highlight-color: transparent;
+}
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+/* State layer: M3's press/hover feedback, minus the ripple. Any
+   element with .state-layer gets a tinted overlay on press. */
+.state-layer { position: relative; overflow: hidden; }
+.state-layer::after {
+  content: ""; position: absolute; inset: 0;
+  background: currentColor; opacity: 0; pointer-events: none;
+  transition: opacity var(--m-dur-short) var(--m-ease);
+}
+.state-layer:active::after { opacity: .10; }
+
+/* ---- App frame ---------------------------------------------------- */
+.m-app {
+  display: flex; flex-direction: column;
+  min-height: 100dvh;                /* dvh so mobile browser chrome is handled */
+  background: var(--color-page);
+}
+.m-body {
+  flex: 1;
+  padding-bottom: calc(var(--m-tabbar-h) + var(--m-safe-bottom) + var(--space-4));
+  overflow-y: auto;
+}
+.m-body.is-flush { padding-left: 0; padding-right: 0; }
+.m-section { padding: var(--space-4); }
+
+/* ============================================================
+   TOP APP BAR  (M3: small + large)
+   ============================================================ */
+.m-appbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: var(--space-2);
+  height: calc(var(--m-appbar-h) + var(--m-safe-top));
+  padding: var(--m-safe-top) var(--space-2) 0;
+  background: var(--color-panel-solid);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.m-appbar .m-appbar-title {
+  flex: 1; min-width: 0;
+  font-size: var(--fs-4); font-weight: var(--weight-medium); color: var(--fg-high);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Large variant: title drops onto its own line, M3's headline treatment.
+   Used on landing screens where the title is the only thing up top. */
+.m-appbar.is-large {
+  height: auto; flex-direction: column; align-items: stretch;
+  padding-bottom: var(--space-3);
+}
+.m-appbar.is-large .m-appbar-row { display: flex; align-items: center; gap: var(--space-2); min-height: var(--m-appbar-h); }
+.m-appbar.is-large .m-appbar-title { font-size: var(--fs-7); line-height: var(--lh-7); font-weight: var(--weight-bold); padding: 0 var(--space-2); }
+.m-appbar.is-dark { background: #242424; border-bottom-color: rgba(255,255,255,.10); color: #fff; }
+.m-appbar.is-dark .m-appbar-title { color: #fff; }
+
+/* ============================================================
+   BOTTOM NAVIGATION BAR  (M3 navigation bar)
+   Active state is the M3 indicator pill, filled amber. This and the
+   FAB are the only places brand colour appears.
+   ============================================================ */
+.m-tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  display: flex; align-items: flex-start; justify-content: space-around;
+  height: calc(var(--m-tabbar-h) + var(--m-safe-bottom));
+  padding-bottom: var(--m-safe-bottom);
+  background: var(--color-panel-solid);
+  border-top: 1px solid var(--border-subtle);
+}
+.m-tab {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding-top: var(--space-2); min-height: var(--m-touch);
+  color: var(--fg-low); text-decoration: none;
+}
+.m-tab .m-tab-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 56px; height: 30px; border-radius: var(--radius-full);
+  transition: background-color var(--m-dur-short) var(--m-ease);
+}
+.m-tab .m-tab-label { font-size: var(--fs-1); font-weight: var(--weight-medium); }
+.m-tab.is-active { color: var(--fg-high); }
+.m-tab.is-active .m-tab-icon { background: var(--accent-9); color: var(--accent-contrast); }
+/* Count badge riding the icon, M3 badge placement */
+.m-tab { position: relative; }
+.m-tab .m-tab-badge {
+  position: absolute; top: 2px; left: 50%; margin-left: 6px;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--danger-solid); color: #fff;
+  font-size: 11px; font-weight: var(--weight-medium);
+}
+
+/* ============================================================
+   BOTTOM SHEET  (M3 modal bottom sheet)
+   Replaces every desktop dialog, popover and dropdown.
+   ============================================================ */
+.m-scrim {
+  position: fixed; inset: 0; z-index: 40;
+  background: var(--color-overlay);
+  animation: m-fade var(--m-dur-medium) var(--m-ease);
+}
+.m-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
+  max-height: 88dvh; display: flex; flex-direction: column;
+  background: var(--color-panel-solid);
+  border-radius: var(--m-radius-sheet) var(--m-radius-sheet) 0 0;
+  padding-bottom: var(--m-safe-bottom);
+  box-shadow: var(--shadow-5);
+  animation: m-rise var(--m-dur-medium) var(--m-ease);
+}
+.m-sheet-handle {
+  flex: none; display: flex; justify-content: center;
+  padding: var(--space-3) 0 var(--space-2);
+}
+.m-sheet-handle span { width: 32px; height: 4px; border-radius: var(--radius-full); background: var(--gray-7); }
+.m-sheet-title { flex: none; padding: 0 var(--space-4) var(--space-2); font-size: var(--fs-5); font-weight: var(--weight-bold); }
+.m-sheet-body { flex: 1; overflow-y: auto; padding: var(--space-2) var(--space-4) var(--space-4); }
+.m-sheet-actions { flex: none; display: flex; gap: var(--space-2); padding: var(--space-3) var(--space-4) var(--space-4); border-top: 1px solid var(--border-subtle); }
+.m-sheet-actions .m-btn { flex: 1; }
+
+/* Full-screen dialog: long flows (Compose, Availability) slide up
+   over everything with their own bar. */
+.m-fullscreen {
+  position: fixed; inset: 0; z-index: 45;
+  display: flex; flex-direction: column;
+  background: var(--color-page);
+  animation: m-rise var(--m-dur-medium) var(--m-ease);
+}
+.m-fullscreen .m-fs-body { flex: 1; overflow-y: auto; padding: var(--space-4); }
+.m-fullscreen .m-fs-actions { flex: none; display: flex; gap: var(--space-2); padding: var(--space-3) var(--space-4) calc(var(--space-4) + var(--m-safe-bottom)); border-top: 1px solid var(--border-subtle); background: var(--color-panel-solid); }
+
+/* Basic dialog: short confirmations that must interrupt */
+.m-dialog {
+  position: fixed; z-index: 46; left: var(--space-5); right: var(--space-5); top: 50%;
+  transform: translateY(-50%);
+  background: var(--color-panel-solid); border-radius: var(--radius-6);
+  box-shadow: var(--shadow-5); padding: var(--space-5);
+  animation: m-pop var(--m-dur-medium) var(--m-ease);
+}
+.m-dialog .m-dialog-title { font-size: var(--fs-5); font-weight: var(--weight-bold); margin-bottom: var(--space-2); }
+.m-dialog .m-dialog-body { font-size: var(--fs-2); color: var(--fg-low); }
+.m-dialog .m-dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-4); }
+
+@keyframes m-rise { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes m-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes m-pop { from { opacity: 0; transform: translateY(-50%) scale(.96); } to { opacity: 1; transform: translateY(-50%) scale(1); } }
+
+/* ============================================================
+   SNACKBAR  (M3) - sits above the tab bar
+   ============================================================ */
+.m-snackbar-host {
+  position: fixed; left: var(--space-4); right: var(--space-4);
+  bottom: calc(var(--m-tabbar-h) + var(--m-safe-bottom) + var(--space-3));
+  z-index: 50; display: flex; flex-direction: column; gap: var(--space-2);
+}
+.m-snackbar {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-inverted); color: var(--fg-on-inverted);
+  border-radius: var(--radius-4); box-shadow: var(--shadow-4);
+  font-size: var(--fs-2);
+  animation: m-rise var(--m-dur-medium) var(--m-ease);
+}
+.m-snackbar .m-snackbar-action { flex: none; color: var(--accent-9); font-weight: var(--weight-medium); }
+
+/* ============================================================
+   BUTTONS  (M3 filled / tonal / outlined / text -> our variants)
+   All at 44px minimum, up from 32px on desktop.
+   ============================================================ */
+.m-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  min-height: var(--m-touch); padding: 0 var(--space-5);
+  border-radius: var(--radius-full);          /* M3 buttons are pill-shaped */
+  font-size: var(--fs-2); font-weight: var(--weight-medium);
+  white-space: nowrap;
+  transition: background-color var(--m-dur-short) var(--m-ease);
+}
+.m-btn .m-btn-icon { width: 18px; height: 18px; flex: none; }
+.m-btn:disabled { background: var(--gray-3); color: var(--fg-disabled); pointer-events: none; }
+.m-btn-filled  { background: var(--accent-9); color: var(--accent-contrast); }
+.m-btn-tonal   { background: var(--accent-3); color: var(--accent-11); }
+.m-btn-outlined{ background: transparent; color: var(--fg-high); box-shadow: inset 0 0 0 1px var(--border-ui); }
+.m-btn-text    { background: transparent; color: var(--accent-11); padding: 0 var(--space-3); }
+.m-btn-danger  { background: var(--danger-solid); color: #fff; }
+
+.m-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--m-touch); height: var(--m-touch);
+  border-radius: var(--radius-full); color: var(--fg-low);
+}
+
+/* FAB - the one floating brand action per screen */
+.m-fab {
+  position: fixed; right: var(--space-4);
+  bottom: calc(var(--m-tabbar-h) + var(--m-safe-bottom) + var(--space-4));
+  z-index: 25;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  height: 56px; min-width: 56px; padding: 0 var(--space-4);
+  border-radius: var(--m-radius-fab);
+  background: var(--accent-9); color: var(--accent-contrast);
+  box-shadow: var(--shadow-4);
+}
+.m-fab.is-extended { padding: 0 var(--space-5); font-size: var(--fs-2); font-weight: var(--weight-medium); }
+
+/* ============================================================
+   LISTS  (M3 one/two/three-line list items)
+   Replaces every desktop table.
+   ============================================================ */
+.m-list { background: var(--color-panel-solid); }
+.m-list-item {
+  display: flex; align-items: center; gap: var(--space-3);
+  min-height: 56px; padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--fg-high);
+}
+.m-list-item:last-child { border-bottom: 0; }
+.m-list-item .m-li-lead { flex: none; display: flex; align-items: center; justify-content: center; color: var(--fg-low); }
+.m-list-item .m-li-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.m-list-item .m-li-title { font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-high); }
+.m-list-item .m-li-sub { font-size: var(--fs-1); color: var(--fg-low); }
+.m-list-item .m-li-trail { flex: none; display: flex; align-items: center; gap: var(--space-2); color: var(--fg-subtle); font-size: var(--fs-1); }
+.m-list-header {
+  position: sticky; top: calc(var(--m-appbar-h) + var(--m-safe-top)); z-index: 10;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-page); color: var(--fg-low);
+  font-size: var(--fs-1); font-weight: var(--weight-medium);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+
+/* Swipeable row: actions sit behind, the surface slides to reveal */
+.m-swipe { position: relative; overflow: hidden; }
+.m-swipe .m-swipe-actions {
+  position: absolute; inset: 0 0 0 auto; display: flex;
+}
+.m-swipe .m-swipe-action {
+  display: flex; align-items: center; justify-content: center;
+  width: 80px; color: #fff; font-size: var(--fs-1); font-weight: var(--weight-medium);
+}
+.m-swipe .m-swipe-action.is-danger { background: var(--danger-solid); }
+.m-swipe .m-swipe-action.is-neutral { background: var(--gray-9); }
+.m-swipe .m-swipe-surface {
+  position: relative; background: var(--color-panel-solid);
+  transition: transform var(--m-dur-medium) var(--m-ease);
+}
+.m-swipe.is-open .m-swipe-surface { transform: translateX(-160px); }
+
+/* ============================================================
+   CARDS, CHIPS, BADGES, DIVIDER, SEGMENTED
+   ============================================================ */
+.m-card {
+  background: var(--color-panel-solid);
+  border: 1px solid var(--border-subtle);      /* outlined, not tonal */
+  border-radius: var(--radius-6);
+  padding: var(--space-4);
+}
+.m-chip {
+  position: relative;
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  min-height: 36px; padding: 0 var(--space-3);
+  border-radius: var(--m-radius-chip);
+  box-shadow: inset 0 0 0 1px var(--border-ui);
+  font-size: var(--fs-2); color: var(--fg-high); background: transparent;
+  white-space: nowrap;
+}
+.m-chip.is-selected { background: var(--accent-3); color: var(--accent-11); box-shadow: inset 0 0 0 1px var(--accent-7); }
+/* Visual stays 36px, tappable area is the full 44px (M3 does the same) */
+.m-chip::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); height: var(--m-touch); }
+.m-chip-row { display: flex; gap: var(--space-2); overflow-x: auto; padding: var(--space-1) var(--space-4); scrollbar-width: none; }
+.m-chip-row::-webkit-scrollbar { display: none; }
+
+.m-badge {
+  display: inline-flex; align-items: center; height: 22px; padding: 0 var(--space-2);
+  border-radius: var(--radius-2); font-size: var(--fs-1); font-weight: var(--weight-medium);
+}
+.m-badge.is-success { background: var(--success-bg); color: var(--success-text); }
+.m-badge.is-warning { background: var(--warning-bg); color: var(--warning-text); }
+.m-badge.is-danger  { background: var(--danger-bg);  color: var(--danger-text); }
+.m-badge.is-info    { background: var(--info-bg);    color: var(--info-text); }
+.m-badge.is-neutral { background: var(--gray-3);     color: var(--fg-low); }
+
+.m-divider { height: 1px; background: var(--border-subtle); }
+
+.m-segmented { display: flex; border-radius: var(--radius-full); box-shadow: inset 0 0 0 1px var(--border-ui); overflow: hidden; }
+.m-segmented-item {
+  flex: 1; min-height: var(--m-touch); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1);
+  font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-low);
+}
+.m-segmented-item.is-active { background: var(--accent-3); color: var(--accent-11); }
+
+/* ============================================================
+   INPUTS  (M3 outlined text field)
+   ============================================================ */
+.m-field { display: flex; flex-direction: column; gap: var(--space-1); }
+.m-field-label { font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-high); }
+.m-field-hint { font-size: var(--fs-1); color: var(--fg-low); }
+.m-field-hint.is-error { color: var(--danger-text); }
+.m-input, .m-select, .m-textarea {
+  width: 100%; min-height: var(--m-touch);
+  padding: var(--space-3); border: 0;
+  background: var(--color-surface); color: var(--fg-high);
+  border-radius: var(--radius-4);
+  box-shadow: inset 0 0 0 1px var(--border-ui);
+  font-family: var(--font-base); font-size: var(--fs-3);   /* 16px stops iOS zoom on focus */
+}
+.m-input:focus, .m-select:focus, .m-textarea:focus { outline: none; box-shadow: inset 0 0 0 2px var(--accent-8); }
+.m-textarea { min-height: 96px; resize: vertical; }
+.m-search {
+  display: flex; align-items: center; gap: var(--space-2);
+  min-height: var(--m-touch); padding: 0 var(--space-3);
+  background: var(--gray-3); border-radius: var(--radius-full);
+}
+.m-search input { flex: 1; border: 0; background: transparent; font-size: var(--fs-3); color: var(--fg-high); outline: none; }
+
+.m-switch { position: relative; display: inline-flex; align-items: center; min-height: var(--m-touch); }
+.m-switch input { appearance: none; width: 52px; height: 32px; border-radius: var(--radius-full); background: var(--gray-6); position: relative; transition: background-color var(--m-dur-short) var(--m-ease); }
+.m-switch input::after { content: ""; position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: var(--radius-full); background: #fff; box-shadow: var(--shadow-2); transition: transform var(--m-dur-short) var(--m-ease); }
+.m-switch input:checked { background: var(--accent-9); }
+.m-switch input:checked::after { transform: translateX(20px); }
+
+.m-check, .m-radio { display: inline-flex; align-items: center; gap: var(--space-3); min-height: var(--m-touch); }
+.m-check input, .m-radio input {
+  appearance: none; width: 24px; height: 24px; flex: none;
+  box-shadow: inset 0 0 0 2px var(--border-ui); background: var(--color-surface);
+  display: inline-grid; place-content: center;
+}
+.m-check input { border-radius: var(--radius-2); }
+.m-radio input { border-radius: var(--radius-full); }
+.m-check input:checked, .m-radio input:checked { background: var(--accent-9); box-shadow: none; }
+.m-check input:checked::after { content: ""; width: 13px; height: 13px; clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%); background: var(--accent-contrast); }
+.m-radio input:checked::after { content: ""; width: 10px; height: 10px; border-radius: var(--radius-full); background: var(--accent-contrast); }
+
+.m-stepper { display: inline-flex; align-items: center; box-shadow: inset 0 0 0 1px var(--border-ui); border-radius: var(--radius-full); }
+.m-stepper button { width: var(--m-touch); height: var(--m-touch); display: inline-flex; align-items: center; justify-content: center; color: var(--fg-high); }
+.m-stepper .m-stepper-value { min-width: 40px; text-align: center; font-size: var(--fs-3); font-weight: var(--weight-medium); }
+
+/* ============================================================
+   FEEDBACK & STATE
+   ============================================================ */
+.m-progress { height: 4px; background: var(--gray-4); border-radius: var(--radius-full); overflow: hidden; }
+.m-progress-fill { height: 100%; background: var(--accent-9); transition: width var(--m-dur-medium) var(--m-ease); }
+.m-spinner { width: 24px; height: 24px; border-radius: var(--radius-full); border: 3px solid var(--gray-5); border-top-color: var(--accent-9); animation: m-spin .8s linear infinite; }
+@keyframes m-spin { to { transform: rotate(360deg); } }
+
+.m-skeleton { background: var(--gray-3); border-radius: var(--radius-3); position: relative; overflow: hidden; }
+.m-skeleton::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent); animation: m-sheen 1.4s infinite; }
+@keyframes m-sheen { to { transform: translateX(100%); } }
+
+.m-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-2); padding: var(--space-7) var(--space-5); }
+.m-empty .m-empty-art { width: 64px; height: 64px; border-radius: var(--radius-full); background: var(--accent-3); color: var(--accent-11); display: grid; place-content: center; margin-bottom: var(--space-2); }
+.m-empty h2 { font-size: var(--fs-4); font-weight: var(--weight-bold); }
+.m-empty p { font-size: var(--fs-2); color: var(--fg-low); max-width: 32ch; }
+
+.m-refresh { display: flex; align-items: center; justify-content: center; gap: var(--space-2); height: 0; overflow: hidden; color: var(--fg-low); font-size: var(--fs-1); transition: height var(--m-dur-medium) var(--m-ease); }
+.m-refresh.is-active { height: 48px; }
+
+/* ============================================================
+   skySchedule-SPECIFIC
+   ============================================================ */
+/* Shift card. Status colours match the desktop contract exactly:
+   confirmed = green, draft = neutral, open = orange, unfulfilled = red. */
+.m-shift {
+  display: flex; align-items: stretch; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-panel-solid);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.m-shift .m-shift-rail { flex: none; width: 4px; border-radius: var(--radius-full); background: var(--gray-6); }
+.m-shift.is-confirmed .m-shift-rail { background: var(--success-solid); }
+.m-shift.is-draft     .m-shift-rail { background: var(--gray-7); }
+.m-shift.is-open      .m-shift-rail { background: var(--warning-solid); }
+.m-shift.is-unfulfilled .m-shift-rail { background: var(--danger-solid); }
+.m-shift .m-shift-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.m-shift .m-shift-time { font-size: var(--fs-3); font-weight: var(--weight-medium); color: var(--fg-high); }
+.m-shift .m-shift-meta { font-size: var(--fs-1); color: var(--fg-low); }
+.m-shift .m-shift-trail { flex: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: var(--space-1); }
+
+/* Agenda day header: sticks under the app bar while its day scrolls */
+.m-day-header {
+  position: sticky; top: calc(var(--m-appbar-h) + var(--m-safe-top)); z-index: 10;
+  display: flex; align-items: baseline; gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-page);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.m-day-header .m-day-num { font-size: var(--fs-5); font-weight: var(--weight-bold); color: var(--fg-high); }
+.m-day-header .m-day-name { font-size: var(--fs-2); color: var(--fg-low); }
+.m-day-header .m-day-count { margin-left: auto; font-size: var(--fs-1); color: var(--fg-subtle); }
+.m-day-header.is-today .m-day-num { color: var(--accent-11); }
+.m-day-header.is-today::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent-9); }
+
+/* Reachability summary, ported from Communications */
+.m-reach { display: flex; flex-direction: column; gap: var(--space-1); }
+.m-reach-row { display: flex; align-items: baseline; gap: var(--space-2); font-size: var(--fs-2); }
+.m-reach-row .m-reach-label { min-width: 88px; font-weight: var(--weight-medium); }
+.m-reach-row.is-ok .m-reach-label { color: var(--success-text); }
+.m-reach-row.is-blocked .m-reach-label { color: var(--warning-text); }
+.m-reach-row .m-reach-why { font-size: var(--fs-1); color: var(--fg-low); }
+
+/* Readiness checklist row, ported from Compose */
+.m-ready-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); width: 100%; text-align: left; }
+.m-ready-row .m-ready-icon { flex: none; }
+.m-ready-row .m-ready-text { flex: 1; min-width: 0; }
+.m-ready-row .m-ready-label { font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-high); display: block; }
+.m-ready-row .m-ready-sub { font-size: var(--fs-1); color: var(--fg-low); }
+.m-ready-row .m-ready-sub.is-error { color: var(--danger-text); }
+
+/* Avatar reuse, sized up for touch contexts */
+.m-avatar { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: var(--radius-full); color: #fff; font-size: var(--fs-2); font-weight: var(--weight-medium); flex: none; }
+.m-avatar.is-sm { width: 32px; height: 32px; font-size: var(--fs-1); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

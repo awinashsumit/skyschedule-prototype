@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<!--
+  skySchedule mobile - component gallery
+  Every component in the mobile layer, in its states, so the set can be
+  reviewed before screens are built on top of it.
+-->
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>skySchedule mobile - components</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./mobile.css?v=2" />
+  <style>
+    .g-group { padding: var(--space-5) var(--space-4) var(--space-2); }
+    .g-group h2 { font-size: var(--fs-1); font-weight: var(--weight-medium); text-transform: uppercase; letter-spacing: .06em; color: var(--fg-subtle); }
+    .g-demo { padding: var(--space-3) var(--space-4); display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+    .g-note { padding: 0 var(--space-4) var(--space-2); font-size: var(--fs-1); color: var(--fg-subtle); }
+    .g-flush { border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+  </style>
+</head>
+<body>
+  <div class="m-app">
+
+    <header class="m-appbar is-large">
+      <div class="m-appbar-row">
+        <button class="m-icon-btn state-layer" aria-label="Back">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <span style="flex:1;"></span>
+        <button class="m-icon-btn state-layer" aria-label="Search">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </button>
+      </div>
+      <div class="m-appbar-title">Components</div>
+    </header>
+
+    <main class="m-body">
+
+      <!-- BUTTONS -->
+      <div class="g-group"><h2>Buttons</h2></div>
+      <div class="g-demo">
+        <button class="m-btn m-btn-filled state-layer">
+          <svg class="m-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          Filled
+        </button>
+        <button class="m-btn m-btn-tonal state-layer">Tonal</button>
+        <button class="m-btn m-btn-outlined state-layer">Outlined</button>
+        <button class="m-btn m-btn-text state-layer">Text</button>
+      </div>
+      <div class="g-demo">
+        <button class="m-btn m-btn-danger state-layer">Destructive</button>
+        <button class="m-btn m-btn-filled" disabled>Disabled</button>
+        <button class="m-icon-btn state-layer" aria-label="More">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+      </div>
+      <p class="g-note">Pill shaped per M3. Amber is reserved for filled, which is the one primary action per screen.</p>
+
+      <!-- CHIPS -->
+      <div class="g-group"><h2>Chips</h2></div>
+      <div class="m-chip-row">
+        <button class="m-chip is-selected state-layer">All</button>
+        <button class="m-chip state-layer">Confirmed</button>
+        <button class="m-chip state-layer">Draft</button>
+        <button class="m-chip state-layer">Open</button>
+        <button class="m-chip state-layer">Unfulfilled</button>
+      </div>
+
+      <!-- BADGES -->
+      <div class="g-group"><h2>Status badges</h2></div>
+      <div class="g-demo">
+        <span class="m-badge is-success">Confirmed</span>
+        <span class="m-badge is-info">Assigned</span>
+        <span class="m-badge is-warning">Open</span>
+        <span class="m-badge is-danger">Unfulfilled</span>
+        <span class="m-badge is-neutral">Draft</span>
+      </div>
+      <p class="g-note">Identical mapping to the desktop app so a status reads the same on both.</p>
+
+      <!-- SEGMENTED -->
+      <div class="g-group"><h2>Segmented button</h2></div>
+      <div class="g-demo" style="display:block;">
+        <div class="m-segmented">
+          <button class="m-segmented-item is-active state-layer">Day</button>
+          <button class="m-segmented-item state-layer">Week</button>
+          <button class="m-segmented-item state-layer">Month</button>
+        </div>
+      </div>
+
+      <!-- LIST ITEMS -->
+      <div class="g-group"><h2>List items</h2></div>
+      <div class="m-list g-flush">
+        <a class="m-list-item state-layer">
+          <span class="m-li-lead"><span class="m-avatar" style="background:var(--chart-1);">AK</span></span>
+          <span class="m-li-text">
+            <span class="m-li-title">Anush Kulal</span>
+            <span class="m-li-sub">Daily Labour &middot; Full-time</span>
+          </span>
+          <span class="m-li-trail">
+            <span class="m-badge is-success">Active</span>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </a>
+        <a class="m-list-item state-layer">
+          <span class="m-li-lead"><span class="m-avatar" style="background:var(--chart-3);">SS</span></span>
+          <span class="m-li-text">
+            <span class="m-li-title">Sahu Sahu</span>
+            <span class="m-li-sub">Dishwasher &middot; Part-time</span>
+          </span>
+          <span class="m-li-trail">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </a>
+      </div>
+
+      <!-- SWIPE -->
+      <div class="g-group"><h2>Swipeable row</h2></div>
+      <div class="m-list g-flush">
+        <div class="m-swipe is-open" id="swipeDemo">
+          <div class="m-swipe-actions">
+            <button class="m-swipe-action is-neutral state-layer">Edit</button>
+            <button class="m-swipe-action is-danger state-layer">Remove</button>
+          </div>
+          <div class="m-swipe-surface">
+            <div class="m-list-item" style="border-bottom:0;">
+              <span class="m-li-lead"><span class="m-avatar" style="background:var(--chart-4);">PD</span></span>
+              <span class="m-li-text">
+                <span class="m-li-title">Priya Desai</span>
+                <span class="m-li-sub">Cook &middot; Thu, Jul 30</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="g-note">Shown revealed. Tap the row to toggle.</p>
+
+      <!-- SHIFT CARDS -->
+      <div class="g-group"><h2>Shift rows</h2></div>
+      <div class="g-flush">
+        <div class="m-shift is-confirmed state-layer">
+          <span class="m-shift-rail"></span>
+          <span class="m-shift-body">
+            <span class="m-shift-time">7:00 AM to 3:00 PM</span>
+            <span class="m-shift-meta">Anush Kulal &middot; Daily Labour</span>
+          </span>
+          <span class="m-shift-trail"><span class="m-badge is-success">Confirmed</span></span>
+        </div>
+        <div class="m-shift is-draft state-layer">
+          <span class="m-shift-rail"></span>
+          <span class="m-shift-body">
+            <span class="m-shift-time">9:00 AM to 5:00 PM</span>
+            <span class="m-shift-meta">Keerthana M &middot; Bread Basket Coordinator</span>
+          </span>
+          <span class="m-shift-trail"><span class="m-badge is-neutral">Draft</span></span>
+        </div>
+        <div class="m-shift is-open state-layer">
+          <span class="m-shift-rail"></span>
+          <span class="m-shift-body">
+            <span class="m-shift-time">4:00 PM to 10:00 PM</span>
+            <span class="m-shift-meta">Unassigned &middot; Cook</span>
+          </span>
+          <span class="m-shift-trail"><button class="m-btn m-btn-tonal state-layer" style="padding:0 var(--space-4);">Assign</button></span>
+        </div>
+        <div class="m-shift is-unfulfilled state-layer">
+          <span class="m-shift-rail"></span>
+          <span class="m-shift-body">
+            <span class="m-shift-time">7:00 AM to 3:00 PM</span>
+            <span class="m-shift-meta">Unassigned &middot; Dishwasher</span>
+          </span>
+          <span class="m-shift-trail"><span class="m-badge is-danger">Unfulfilled</span></span>
+        </div>
+      </div>
+
+      <!-- AGENDA DAY HEADER -->
+      <div class="g-group"><h2>Agenda day header</h2></div>
+      <div class="g-flush">
+        <div class="m-day-header is-today" style="position:relative;">
+          <span class="m-day-num">27</span>
+          <span class="m-day-name">Monday &middot; Today</span>
+          <span class="m-day-count">3 shifts</span>
+        </div>
+        <div class="m-shift is-confirmed">
+          <span class="m-shift-rail"></span>
+          <span class="m-shift-body">
+            <span class="m-shift-time">7:00 AM to 3:00 PM</span>
+            <span class="m-shift-meta">Sahu Sahu &middot; Dishwasher</span>
+          </span>
+        </div>
+        <div class="m-day-header" style="position:relative;">
+          <span class="m-day-num">28</span>
+          <span class="m-day-name">Tuesday</span>
+          <span class="m-day-count">2 shifts</span>
+        </div>
+      </div>
+
+      <!-- CARD -->
+      <div class="g-group"><h2>Card</h2></div>
+      <div class="m-section">
+        <div class="m-card">
+          <div style="font-size:var(--fs-4);font-weight:var(--weight-bold);margin-bottom:var(--space-1);">Needs attention</div>
+          <div style="font-size:var(--fs-2);color:var(--fg-low);">3 open exceptions, including earlier weeks.</div>
+        </div>
+      </div>
+
+      <!-- INPUTS -->
+      <div class="g-group"><h2>Inputs</h2></div>
+      <div class="m-section" style="display:flex;flex-direction:column;gap:var(--space-4);">
+        <div class="m-search">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--fg-subtle)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+          <input placeholder="Search members" />
+        </div>
+        <label class="m-field">
+          <span class="m-field-label">Position</span>
+          <select class="m-select"><option>Daily Labour</option><option>Dishwasher</option><option>Cook</option></select>
+        </label>
+        <label class="m-field">
+          <span class="m-field-label">Message</span>
+          <textarea class="m-textarea" placeholder="Keep it short. SMS is billed per 160 characters."></textarea>
+          <span class="m-field-hint">Merge fields expand at send time.</span>
+        </label>
+        <label class="m-field">
+          <span class="m-field-label">Email subject</span>
+          <input class="m-input" value="" placeholder="Subject line" />
+          <span class="m-field-hint is-error">Add a subject line</span>
+        </label>
+      </div>
+
+      <!-- SELECTION CONTROLS -->
+      <div class="g-group"><h2>Selection controls</h2></div>
+      <div class="m-section" style="display:flex;flex-direction:column;gap:var(--space-2);">
+        <label class="m-switch" style="gap:var(--space-3);"><input type="checkbox" checked /> <span>Send by SMS</span></label>
+        <label class="m-check"><input type="checkbox" checked /> <span>Release shifts back to Open</span></label>
+        <label class="m-radio"><input type="radio" name="demo" checked /> <span>Send now</span></label>
+        <label class="m-radio"><input type="radio" name="demo" /> <span>Schedule for later</span></label>
+        <div style="display:flex;align-items:center;gap:var(--space-3);">
+          <span style="font-size:var(--fs-2);">Quantity</span>
+          <div class="m-stepper">
+            <button class="state-layer" aria-label="Decrease">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M5 12h14"/></svg>
+            </button>
+            <span class="m-stepper-value">1</span>
+            <button class="state-layer" aria-label="Increase">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- READINESS -->
+      <div class="g-group"><h2>Readiness rows</h2></div>
+      <div class="g-flush">
+        <button class="m-ready-row state-layer">
+          <span class="m-ready-icon" style="color:var(--success-solid);">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+          </span>
+          <span class="m-ready-text"><span class="m-ready-label">Audience</span><span class="m-ready-sub">8 people on the schedule</span></span>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--fg-subtle)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+        <button class="m-ready-row state-layer">
+          <span class="m-ready-icon" style="color:var(--danger-solid);">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+          </span>
+          <span class="m-ready-text"><span class="m-ready-label">Email</span><span class="m-ready-sub is-error">Add a subject line</span></span>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--fg-subtle)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+
+      <!-- REACHABILITY -->
+      <div class="g-group"><h2>Reachability</h2></div>
+      <div class="m-section">
+        <div class="m-card">
+          <div class="m-reach">
+            <div class="m-reach-row is-blocked"><span class="m-reach-label">SMS 6 of 8</span><span class="m-reach-why">1 no mobile number, 1 opted out</span></div>
+            <div class="m-reach-row is-ok"><span class="m-reach-label">Email 8 of 8</span></div>
+            <div class="m-reach-row is-blocked"><span class="m-reach-label">Push 6 of 8</span><span class="m-reach-why">2 do not use the app</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FEEDBACK -->
+      <div class="g-group"><h2>Progress and loading</h2></div>
+      <div class="m-section" style="display:flex;flex-direction:column;gap:var(--space-4);">
+        <div class="m-progress"><div class="m-progress-fill" style="width:66%;"></div></div>
+        <div style="display:flex;align-items:center;gap:var(--space-3);"><div class="m-spinner"></div><span style="font-size:var(--fs-2);color:var(--fg-low);">Loading shifts</span></div>
+        <div style="display:flex;gap:var(--space-3);align-items:center;">
+          <div class="m-skeleton" style="width:40px;height:40px;border-radius:var(--radius-full);"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+            <div class="m-skeleton" style="height:12px;width:60%;"></div>
+            <div class="m-skeleton" style="height:10px;width:40%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EMPTY -->
+      <div class="g-group"><h2>Empty state</h2></div>
+      <div class="m-empty">
+        <span class="m-empty-art">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+        </span>
+        <h2>No shifts on this day</h2>
+        <p>Nothing is scheduled for Wednesday. Create a shift to fill the gap.</p>
+        <button class="m-btn m-btn-tonal state-layer" style="margin-top:var(--space-2);">Create shift</button>
+      </div>
+
+      <!-- OVERLAYS -->
+      <div class="g-group"><h2>Overlays</h2></div>
+      <div class="g-demo">
+        <button class="m-btn m-btn-outlined state-layer" id="openSheet">Bottom sheet</button>
+        <button class="m-btn m-btn-outlined state-layer" id="openDialog">Dialog</button>
+        <button class="m-btn m-btn-outlined state-layer" id="openFull">Full screen</button>
+        <button class="m-btn m-btn-outlined state-layer" id="openSnack">Snackbar</button>
+      </div>
+
+      <div style="height:var(--space-7);"></div>
+    </main>
+
+    <!-- FAB -->
+    <button class="m-fab is-extended state-layer" id="fabDemo">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      Create shift
+    </button>
+
+    <!-- TAB BAR -->
+    <nav class="m-tabbar" aria-label="Primary">
+      <a class="m-tab is-active state-layer">
+        <span class="m-tab-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg></span>
+        <span class="m-tab-label">Schedule</span>
+      </a>
+      <a class="m-tab state-layer">
+        <span class="m-tab-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+        <span class="m-tab-label">Shifts</span>
+        <span class="m-tab-badge">3</span>
+      </a>
+      <a class="m-tab state-layer">
+        <span class="m-tab-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg></span>
+        <span class="m-tab-label">BFMs</span>
+      </a>
+      <a class="m-tab state-layer">
+        <span class="m-tab-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/></svg></span>
+        <span class="m-tab-label">Messages</span>
+      </a>
+      <a class="m-tab state-layer">
+        <span class="m-tab-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg></span>
+        <span class="m-tab-label">More</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Overlay hosts -->
+  <div id="overlayHost"></div>
+  <div class="m-snackbar-host" id="snackHost"></div>
+
+  <script>
+    (function () {
+      var host = document.getElementById('overlayHost');
+      function close() { host.innerHTML = ''; }
+
+      document.getElementById('openSheet').addEventListener('click', function () {
+        host.innerHTML =
+          '<div class="m-scrim" data-close></div>' +
+          '<div class="m-sheet" role="dialog" aria-modal="true">' +
+            '<div class="m-sheet-handle"><span></span></div>' +
+            '<div class="m-sheet-title">Filter shifts</div>' +
+            '<div class="m-sheet-body">' +
+              '<div class="m-chip-row" style="padding-left:0;padding-right:0;">' +
+                '<button class="m-chip is-selected">All</button><button class="m-chip">Confirmed</button>' +
+                '<button class="m-chip">Draft</button><button class="m-chip">Open</button>' +
+              '</div>' +
+              '<label class="m-field" style="margin-top:var(--space-4);"><span class="m-field-label">Role</span>' +
+              '<select class="m-select"><option>All roles</option><option>Cook</option><option>Dishwasher</option></select></label>' +
+            '</div>' +
+            '<div class="m-sheet-actions">' +
+              '<button class="m-btn m-btn-outlined state-layer" data-close>Clear</button>' +
+              '<button class="m-btn m-btn-filled state-layer" data-close>Apply</button>' +
+            '</div>' +
+          '</div>';
+        wire();
+      });
+
+      document.getElementById('openDialog').addEventListener('click', function () {
+        host.innerHTML =
+          '<div class="m-scrim" data-close></div>' +
+          '<div class="m-dialog" role="alertdialog">' +
+            '<div class="m-dialog-title">Deactivate Anush Kulal?</div>' +
+            '<div class="m-dialog-body">They will not appear in the scheduler until reactivated. 2 upcoming shifts are assigned.</div>' +
+            '<div class="m-dialog-actions">' +
+              '<button class="m-btn m-btn-text state-layer" data-close>Cancel</button>' +
+              '<button class="m-btn m-btn-danger state-layer" data-close>Deactivate</button>' +
+            '</div>' +
+          '</div>';
+        wire();
+      });
+
+      document.getElementById('openFull').addEventListener('click', function () {
+        host.innerHTML =
+          '<div class="m-fullscreen" role="dialog" aria-modal="true">' +
+            '<header class="m-appbar">' +
+              '<button class="m-icon-btn state-layer" data-close aria-label="Close">' +
+                '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>' +
+              '</button>' +
+              '<span class="m-appbar-title">New message</span>' +
+              '<span class="m-badge is-neutral">Draft</span>' +
+            '</header>' +
+            '<div class="m-fs-body">' +
+              '<div style="font-size:var(--fs-2);font-weight:var(--weight-medium);margin-bottom:var(--space-2);">4 of 6 ready</div>' +
+              '<div class="m-progress" style="margin-bottom:var(--space-4);"><div class="m-progress-fill" style="width:66%;"></div></div>' +
+              '<div class="m-card" style="padding:0;overflow:hidden;">' +
+                '<button class="m-ready-row state-layer"><span class="m-ready-icon" style="color:var(--success-solid);"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span><span class="m-ready-text"><span class="m-ready-label">Audience</span><span class="m-ready-sub">8 people</span></span></button>' +
+                '<button class="m-ready-row state-layer" style="border-bottom:0;"><span class="m-ready-icon" style="color:var(--danger-solid);"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/></svg></span><span class="m-ready-text"><span class="m-ready-label">Email</span><span class="m-ready-sub is-error">Add a subject line</span></span></button>' +
+              '</div>' +
+            '</div>' +
+            '<div class="m-fs-actions">' +
+              '<button class="m-btn m-btn-outlined state-layer" data-close style="flex:1;">Finish later</button>' +
+              '<button class="m-btn m-btn-filled state-layer" data-close style="flex:1;">Review</button>' +
+            '</div>' +
+          '</div>';
+        wire();
+      });
+
+      document.getElementById('openSnack').addEventListener('click', function () {
+        var s = document.createElement('div');
+        s.className = 'm-snackbar';
+        s.innerHTML = '<span style="flex:1;">Anush Kulal restored</span><button class="m-snackbar-action">Undo</button>';
+        document.getElementById('snackHost').appendChild(s);
+        setTimeout(function () { s.remove(); }, 3200);
+      });
+
+      document.getElementById('fabDemo').addEventListener('click', function () {
+        document.getElementById('openSheet').click();
+      });
+
+      document.getElementById('swipeDemo').addEventListener('click', function () {
+        this.classList.toggle('is-open');
+      });
+
+      function wire() {
+        host.querySelectorAll('[data-close]').forEach(function (b) {
+          b.addEventListener('click', close);
+        });
+      }
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    })();
+  </script>
+</body>
+</html>
