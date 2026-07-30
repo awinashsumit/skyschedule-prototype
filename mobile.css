@@ -28,6 +28,12 @@
   --m-radius-fab: 16px;
   --m-radius-chip: var(--radius-full);
 
+  /* Amber dark enough to be legible AS TEXT on white and on amber tints.
+     --accent-9/-11 are #ffb31c, which is only 1.79:1 on white: fine as a
+     background with dark text on top (how desktop uses it), unusable as
+     ink. 5.37:1 on white, 4.77:1 on --accent-3. */
+  --m-brand-ink: #9c5b00;
+
   /* Minimum comfortable touch target. Desktop used 26-32px controls;
      both iOS and Android want 44-48px. */
   --m-touch: 44px;
@@ -143,12 +149,23 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .m-tab .m-tab-icon {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 56px; height: 30px; border-radius: var(--radius-full);
-  transition: background-color var(--m-dur-short) var(--m-ease);
+  width: 56px; height: 30px;
+  transition: color var(--m-dur-short) var(--m-ease);
 }
-.m-tab .m-tab-label { font-size: var(--fs-1); font-weight: var(--weight-medium); }
-.m-tab.is-active { color: var(--fg-high); }
-.m-tab.is-active .m-tab-icon { background: var(--accent-9); color: var(--accent-contrast); }
+.m-tab .m-tab-label { font-size: var(--fs-1); font-weight: var(--weight-medium); transition: color var(--m-dur-short) var(--m-ease); }
+
+/* Active state: the icon swaps to its filled variant and both icon and
+   label take the brand colour. No indicator pill.
+   Colour is --m-brand-ink, a darker amber than --accent-9, because amber-9
+   on white is 1.79:1 and fails even the 3:1 bar for non-text. This value
+   is 5.37:1 on white, so an amber label is genuinely legible. */
+.m-tab.is-active { color: var(--m-brand-ink); }
+.m-tab.is-active .m-tab-icon,
+.m-tab.is-active .m-tab-label { color: var(--m-brand-ink); }
+/* Outline icon hidden when active, filled icon hidden when inactive */
+.m-tab .m-icon-filled { display: none; }
+.m-tab.is-active .m-icon-outline { display: none; }
+.m-tab.is-active .m-icon-filled { display: block; }
 /* Count badge riding the icon, M3 badge placement */
 .m-tab { position: relative; }
 .m-tab .m-tab-badge {
