@@ -80,7 +80,12 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 /* ---- App frame ---------------------------------------------------- */
 .m-app {
   display: flex; flex-direction: column;
-  min-height: 100dvh;                /* dvh so mobile browser chrome is handled */
+  /* height, not min-height: the shell must be locked to the viewport so
+     .m-body becomes the scroll container. With min-height the shell grows
+     past the viewport, .m-body never gets a constrained height, and the
+     document scrolls instead - which breaks internal scroll regions,
+     pull-to-refresh, and causes the iOS address-bar jump that dvh avoids. */
+  height: 100dvh; overflow: hidden;
   background: var(--color-page);
 }
 .m-body {
@@ -95,7 +100,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    TOP APP BAR  (M3: small + large)
    ============================================================ */
 .m-appbar {
-  position: sticky; top: 0; z-index: 20;
+  position: relative; z-index: 20; flex: none;
   display: flex; align-items: center; gap: var(--space-2);
   height: calc(var(--m-appbar-h) + var(--m-safe-top));
   padding: var(--m-safe-top) var(--space-2) 0;
@@ -285,7 +290,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .m-list-item .m-li-sub { font-size: var(--fs-1); color: var(--fg-low); }
 .m-list-item .m-li-trail { flex: none; display: flex; align-items: center; gap: var(--space-2); color: var(--fg-subtle); font-size: var(--fs-1); }
 .m-list-header {
-  position: sticky; top: calc(var(--m-appbar-h) + var(--m-safe-top)); z-index: 10;
+  position: sticky; top: 0; z-index: 10;
   padding: var(--space-2) var(--space-4);
   background: var(--color-page); color: var(--fg-low);
   font-size: var(--fs-1); font-weight: var(--weight-medium);
@@ -441,7 +446,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 /* Agenda day header: sticks under the app bar while its day scrolls */
 .m-day-header {
-  position: sticky; top: calc(var(--m-appbar-h) + var(--m-safe-top)); z-index: 10;
+  position: sticky; top: 0; z-index: 10;
   display: flex; align-items: baseline; gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
   background: var(--color-page);
