@@ -103,6 +103,18 @@ circular counters and small avatars where 13px will not fit.
 Trailing content is right-aligned and does not share a left edge. The two-up
 KPI grid has its own second column. Anything landing elsewhere is a bug.
 
+**Styling lives in `mobile.css`, not the markup.** Every recurring pattern is
+a named component or a small utility class. Inline styles are down from 179 to
+~60 and the remainder are genuine one-offs (a progress bar's computed width, a
+single-use flex arrangement). If you find yourself writing the same inline
+style twice, it belongs in the stylesheet. Two rules worth knowing:
+
+- `icon()` emits a sized class, not inline geometry, so ~90 call sites carry no
+  dimensions.
+- Watch for a tag ending up with two `class` attributes — the browser keeps the
+  first and silently drops the second. That bug shipped once and took out
+  every full-width row on the More screen.
+
 **Icons are Lucide**, loaded from a pinned CDN build and rendered from
 `<i data-lucide="…">` placeholders — no hand-traced path data. The exception is
 the five *filled* tab-bar icons, which are hand-drawn because Lucide ships an

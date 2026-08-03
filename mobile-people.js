@@ -70,7 +70,7 @@
     });
     if (lastKey !== null) h.push('</div></div></div>');
     if (flat.length) h.unshift('<div class="m-stack" style="padding-top:var(--space-2);"><div class="m-card is-rows">' + flat.join('') + '</div></div>');
-    h.push('<div style="padding:var(--space-5);text-align:center;font-size:var(--m-fs-meta);color:var(--fg-subtle);">' +
+    h.push('<div class="m-note is-center">' +
       list.length + (list.length === 1 ? ' person' : ' people') + '</div>');
 
     body.innerHTML = h.join('');
@@ -86,14 +86,14 @@
        trailing edge where it is a number to compare down the column rather
        than the tail of a sentence that pushes the row to two lines. */
     var sub = sort === 'hours' ? hoursFor(b.id) + 'h this week' : b.primary + ' · ' + b.employment;
-    return '<button class="m-list-item state-layer" data-bfm="' + b.id + '" style="width:100%;text-align:left;background:none;border:0;">' +
+    return '<button class="m-list-item state-layer m-row-btn" data-bfm="' + b.id + '" >' +
       '<span class="m-li-lead">' + A.avatar(b) + '</span>' +
       '<span class="m-li-text"><span class="m-li-title">' + esc(S.fullName(b)) + '</span>' +
       '<span class="m-li-sub">' + esc(sub) + '</span></span>' +
       '<span class="m-li-trail">' +
       (b.account !== 'active' ? '<span class="m-badge ' + ab[0] + '">' + ab[1] + '</span>' : '') +
-      (b.alert ? '<span style="color:var(--warning-solid);">' + icon('warn', 18) + '</span>' : '') +
-      (n && sort !== 'hours' ? '<span style="white-space:nowrap;">' + n + '</span>' : '') +
+      (b.alert ? icon('warn', 18, 'warning') : '') +
+      (n && sort !== 'hours' ? '<span class="u-nowrap">' + n + '</span>' : '') +
       icon('chevron', 20) + '</span></button>';
   }
 
@@ -187,21 +187,21 @@
         A.kv('Email', 'On · ' + b.email) +
         A.kv('Push', b.push ? 'On' : 'Not using the app')) + '</div>');
 
-      h.push('<div style="padding:var(--space-5) var(--space-4);">' +
+      h.push('<div class="m-footer-action">' +
         (b.account === 'deactivated'
-          ? '<button class="m-btn m-btn-filled state-layer" data-do="restore" style="width:100%;">Restore ' + esc(b.first) + '</button>'
-          : '<button class="m-btn m-btn-danger state-layer" data-do="deactivate" style="width:100%;">Deactivate ' + esc(b.first) + '</button>') +
+          ? '<button class="m-btn m-btn-filled state-layer u-full" data-do="restore" >Restore ' + esc(b.first) + '</button>'
+          : '<button class="m-btn m-btn-danger state-layer u-full" data-do="deactivate" >Deactivate ' + esc(b.first) + '</button>') +
         '</div>');
       return h.join('');
     }
 
     function tile(v, l) {
-      return '<div class="m-kpi"><span class="m-kpi-val" style="font-size:var(--m-fs-title);">' + esc(v) + '</span>' +
+      return '<div class="m-kpi"><span class="m-kpi-val u-title">' + esc(v) + '</span>' +
         '<span class="m-kpi-label">' + esc(l) + '</span></div>';
     }
-    function note(t) { return '<div style="padding:0 var(--m-inset) var(--space-2);font-size:var(--m-fs-body);color:var(--fg-low);">' + esc(t) + '</div>'; }
+    function note(t) { return '<div class="u-body-low u-inset">' + esc(t) + '</div>'; }
     function more(key, label) {
-      return '<div style="padding:var(--space-2) var(--m-inset);"><button class="m-btn m-btn-text state-layer" data-more="' + key + '" style="width:100%;">' + esc(label) + '</button></div>';
+      return '<div style="padding:var(--space-2) var(--m-inset);"><button class="m-btn m-btn-text state-layer u-full" data-more="' + key + '" >' + esc(label) + '</button></div>';
     }
 
     A.fullscreen({
@@ -260,13 +260,13 @@
   function deactivate(b, refresh) {
     var affected = S.SHIFTS.filter(function (s) { return s.bfmId === b.id && s.day >= S.TODAY; });
     var listHtml = affected.length
-      ? '<div style="margin-top:var(--space-3);">' + affected.map(function (s) {
+      ? '<div class="u-mt-3">' + affected.map(function (s) {
           var day = S.DAYS[s.day];
           return '<div style="display:flex;gap:var(--space-2);font-size:var(--m-fs-meta);padding:4px 0;">' +
-            '<span style="color:var(--danger-text);">&bull;</span><span>' +
+            '<span class="u-danger">&bull;</span><span>' +
             esc(day.short + ', ' + day.label + ' · ' + s.start + ' to ' + s.end + ' · ' + s.position) + '</span></div>';
         }).join('') + '</div>' +
-        '<label class="m-check" style="margin-top:var(--space-3);"><input type="checkbox" id="releaseChk" checked /> ' +
+        '<label class="m-check u-mt-3"><input type="checkbox" id="releaseChk" checked /> ' +
         '<span>Release these back to Open</span></label>'
       : '';
 
@@ -329,7 +329,7 @@
     function rowsHtml() {
       return draft.map(function (a, i) {
         return '<div class="m-card" style="padding:var(--space-4) var(--m-card-pad);">' +
-          '<label class="m-switch" style="gap:var(--space-3);justify-content:space-between;width:100%;">' +
+          '<label class="m-switch is-row">' +
             '<span style="flex:1;font-size:var(--m-fs-body);font-weight:var(--weight-medium);">' + S.DAYS[i].dow + '</span>' +
             '<input type="checkbox" data-day="' + i + '"' + (a.on ? ' checked' : '') + ' /></label>' +
           (a.on
@@ -340,7 +340,7 @@
       }).join('');
     }
     function timeSel(i, key, val, times) {
-      return '<select class="m-select" data-t="' + i + '" data-k="' + key + '" style="flex:1;">' +
+      return '<select class="m-select u-grow" data-t="' + i + '" data-k="' + key + '" >' +
         times.map(function (t) { return '<option' + (t === val ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>';
     }
 
@@ -349,8 +349,8 @@
       body: '<div class="m-alert is-info" style="margin:var(--space-4);">' + icon('circle', 18) +
         '<span>Availability affects who shows as available when you assign a shift. It does not block an override.</span></div>' +
         '<div class="m-stack" id="availRows">' + rowsHtml() + '</div>',
-      actions: '<button class="m-btn m-btn-outlined state-layer" data-close style="flex:1;">Cancel</button>' +
-               '<button class="m-btn m-btn-filled state-layer" data-save style="flex:1;">Save</button>',
+      actions: '<button class="m-btn m-btn-outlined state-layer u-grow" data-close >Cancel</button>' +
+               '<button class="m-btn m-btn-filled state-layer u-grow" data-save >Save</button>',
       wire: function (node) {
         function attach() {
           $$('[data-day]', node).forEach(function (c) {
@@ -415,13 +415,13 @@
           '<select class="m-select" data-f="employment">' + ['Full-time', 'Part-time', 'Agency'].map(function (p) {
             return '<option' + (p === v.employment ? ' selected' : '') + '>' + p + '</option>'; }).join('') + '</select></label>' +
         '<div style="display:flex;gap:var(--space-3);">' +
-          '<label class="m-field" style="flex:1;"><span class="m-field-label">Min hours</span>' +
+          '<label class="m-field u-grow"><span class="m-field-label">Min hours</span>' +
             '<input class="m-input" data-f="minHrs" type="number" value="' + v.minHrs + '" /></label>' +
-          '<label class="m-field" style="flex:1;"><span class="m-field-label">Max hours</span>' +
+          '<label class="m-field u-grow"><span class="m-field-label">Max hours</span>' +
             '<input class="m-input" data-f="maxHrs" type="number" value="' + v.maxHrs + '" /></label>' +
         '</div></div>',
-      actions: '<button class="m-btn m-btn-outlined state-layer" data-close style="flex:1;">Cancel</button>' +
-               '<button class="m-btn m-btn-filled state-layer" data-save style="flex:1;">' + (existing ? 'Save' : 'Add') + '</button>',
+      actions: '<button class="m-btn m-btn-outlined state-layer u-grow" data-close >Cancel</button>' +
+               '<button class="m-btn m-btn-filled state-layer u-grow" data-save >' + (existing ? 'Save' : 'Add') + '</button>',
       wire: function (node) {
         $$('[data-f]', node).forEach(function (i) {
           i.addEventListener('input', function () { v[i.getAttribute('data-f')] = i.value; });

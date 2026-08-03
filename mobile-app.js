@@ -43,11 +43,13 @@
     logout: 'log-out', edit: 'pencil', filter: 'list-filter', search: 'search'
   };
 
-  function icon(name, size, stroke) {
+  /* Emits a sized class rather than an inline style: there are ~90 icon
+     call sites and none of them should be carrying geometry. */
+  function icon(name, size, tone) {
     var n = LUCIDE[name] || name;
-    size = size || 24;
-    return '<i data-lucide="' + n + '" style="width:' + size + 'px;height:' + size +
-      'px;display:inline-flex;flex:none;" data-sw="' + (stroke || 1.75) + '"></i>';
+    return '<i data-lucide="' + n + '" class="m-ico' +
+      (size && size !== 24 ? ' is-' + size : '') +
+      (tone ? ' is-' + tone : '') + '"></i>';
   }
 
   var painting = false;
@@ -65,11 +67,7 @@
     iconObserver.disconnect();
     try {
       w.lucide.createIcons();
-      $$('svg[data-lucide]').forEach(function (svg) {
-        svg.removeAttribute('data-lucide');
-        var sw = svg.getAttribute('data-sw');
-        if (sw) { svg.setAttribute('stroke-width', sw); svg.removeAttribute('data-sw'); }
-      });
+      $$('svg[data-lucide]').forEach(function (svg) { svg.removeAttribute('data-lucide'); });
     } finally {
       iconObserver.observe(d.documentElement, { childList: true, subtree: true });
       painting = false;
@@ -140,8 +138,8 @@
       '<div class="m-sheet" role="dialog" aria-modal="true" aria-label="' + esc(o.title || 'Options') + '">' +
         '<div class="m-sheet-handle"><span></span></div>' +
         (o.title ? '<div class="m-sheet-title">' + esc(o.title) + '</div>' : '') +
-        (o.sub ? '<div style="padding:0 var(--m-inset) var(--space-2);font-size:var(--m-fs-body);color:var(--fg-low);">' + esc(o.sub) + '</div>' : '') +
-        '<div class="m-sheet-body"' + (o.rows ? ' style="padding-left:0;padding-right:0;"' : '') + '>' + body + '</div>' +
+        (o.sub ? '<div class="u-body-low u-inset">' + esc(o.sub) + '</div>' : '') +
+        '<div class="m-sheet-body' + (o.rows ? ' is-rows' : '') + '">' + body + '</div>' +
         (o.actions ? '<div class="m-sheet-actions">' + o.actions + '</div>' : '') +
       '</div>',
       { wire: function (node) {
@@ -201,7 +199,7 @@
   function snack(msg, actionLabel, onAction) {
     var s = d.createElement('div');
     s.className = 'm-snackbar';
-    s.innerHTML = '<span style="flex:1;">' + esc(msg) + '</span>' +
+    s.innerHTML = '<span class="u-grow">' + esc(msg) + '</span>' +
       (actionLabel ? '<button class="m-snackbar-action">' + esc(actionLabel) + '</button>' : '');
     $('#snackHost').appendChild(s);
     var t = setTimeout(function () { s.remove(); }, 4000);
@@ -288,11 +286,11 @@
               '<span class="m-attn-when">' + esc(day.short + ', ' + day.label) + ' &middot; ' + esc(s.start + ' to ' + s.end) + '</span>' +
             '</span>' + icon('chevron', 20) + '</button>';
         }).join('') +
-        (ex.length > 3 ? '<div class="m-attn-foot"><button class="m-btn m-btn-text state-layer" data-goto="schedule" data-filter="open" style="width:100%;">View all ' + ex.length + '</button></div>' : '') +
+        (ex.length > 3 ? '<div class="m-attn-foot"><button class="m-btn m-btn-text state-layer u-full" data-goto="schedule" data-filter="open" >View all ' + ex.length + '</button></div>' : '') +
         '</div>');
     } else {
       h.push('<div class="m-attn"><div class="m-attn-head"><span class="m-attn-title">Needs attention</span></div>' +
-        '<div style="padding:var(--m-inset);font-size:var(--m-fs-body);color:var(--fg-low);">Every shift this week is covered.</div></div>');
+        '<div class="u-body-low" style="padding:var(--m-inset);">Every shift this week is covered.</div></div>');
     }
 
     h.push('<div class="m-sec-head"><h2>This week</h2>' +
@@ -313,7 +311,7 @@
         var line = r.type === 'swap' ? 'Wants to drop ' + r.when + ', ' + r.time
           : r.type === 'timeoff' ? 'Time off ' + r.from + ' to ' + r.to
           : 'Claiming the open ' + r.position + ' shift';
-        return '<button class="m-list-item state-layer" data-review="' + r.id + '" style="width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0;">' +
+        return '<button class="m-list-item state-layer m-row-btn" data-review="' + r.id + '" >' +
           '<span class="m-li-lead">' + avatar(b, true) + '</span>' +
           '<span class="m-li-text"><span class="m-li-title">' + esc(S.fullName(b)) + '</span>' +
           '<span class="m-li-sub">' + esc(line) + '</span></span>' +
@@ -348,7 +346,7 @@
   function shiftRow(s) {
     var b = S.byId(s.bfmId);
     var trail = (s.status === 'open' || s.status === 'unfulfilled')
-      ? '<button class="m-btn m-btn-tonal state-layer" data-assign="' + s.id + '" style="padding:0 var(--m-inset);">Assign</button>'
+      ? '<button class="m-btn m-btn-tonal state-layer u-inset" data-assign="' + s.id + '" >Assign</button>'
       : badge(s.status);
     return '<div class="m-shift is-' + s.status + ' state-layer" data-shift="' + s.id + '">' +
       '<span class="m-shift-rail"></span>' +
@@ -450,14 +448,14 @@
     sheet({
       title: S.fullName(b),
       body: '<div style="display:flex;align-items:center;gap:var(--space-3);padding-bottom:var(--space-3);">' +
-              avatar(b) + '<div><div style="font-size:var(--m-fs-body);font-weight:var(--weight-medium);">' + esc(b.primary) + '</div>' +
+              avatar(b) + '<div><div class="u-body u-medium">' + esc(b.primary) + '</div>' +
               '<div style="font-size:var(--m-fs-meta);color:var(--fg-low);">Requested ' + esc(r.age) + '</div></div></div>' +
             lines.map(function (l) {
               return '<div style="display:flex;gap:var(--space-4);padding:var(--space-2) 0;font-size:var(--m-fs-body);">' +
                 '<span style="width:40%;color:var(--fg-low);">' + esc(l[0]) + '</span>' +
-                '<span style="flex:1;">' + esc(l[1]) + '</span></div>';
+                '<span class="u-grow">' + esc(l[1]) + '</span></div>';
             }).join('') +
-            (r.note ? '<div class="m-review-msg" style="margin-top:var(--space-3);">' + esc(r.note) + '</div>' : '') +
+            (r.note ? '<div class="m-review-msg u-mt-3">' + esc(r.note) + '</div>' : '') +
             warn,
       actions: '<button class="m-btn m-btn-outlined state-layer" data-decline>Decline</button>' +
                '<button class="m-btn m-btn-filled state-layer" data-approve>Approve</button>',
@@ -498,7 +496,7 @@
       title: 'Community', back: true, onBack: function () {},
       flush: true,
       body: '<div class="m-stack" style="padding:var(--m-inset) 0;" id="feedList">' + S.POSTS.map(postCard).join('') + '</div>',
-      actions: '<button class="m-btn m-btn-filled state-layer" id="newPost" style="flex:1;">New post</button>',
+      actions: '<button class="m-btn m-btn-filled state-layer u-grow" id="newPost" >New post</button>',
       wire: function (node) {
         wirePosts(node);
         $('#newPost', node).addEventListener('click', function () {
@@ -547,27 +545,27 @@
         { id: 'help', icon: 'help', title: 'Help and support' }
       ] }
     ];
-    var h = ['<div class="m-stack" style="padding-top:var(--space-4);">' +
-      '<button class="m-card m-list-item state-layer" data-open="profile" style="width:100%;text-align:left;padding:var(--space-4) var(--m-card-pad);">' +
+    var h = ['<div class="m-stack is-top">' +
+      '<button class="m-card m-list-item state-layer m-card-row" data-open="profile" >' +
       '<span class="m-li-lead">' + avatar(me) + '</span>' +
-      '<span class="m-li-text"><span class="m-li-title" style="font-size:var(--m-fs-title);">' + esc(me.first + ' ' + me.last) + '</span>' +
+      '<span class="m-li-text"><span class="m-li-title u-title">' + esc(me.first + ' ' + me.last) + '</span>' +
       '<span class="m-li-sub">' + esc(me.primary) + '</span></span>' +
       '<span class="m-li-trail">' + icon('chevron', 20) + '</span></button></div>'];
 
     groups.forEach(function (g) {
       h.push('<div class="m-list-header">' + esc(g.label) + '</div>');
       h.push('<div class="m-stack"><div class="m-card is-rows">' + g.items.map(function (it) {
-        return '<button class="m-list-item state-layer" data-open="' + it.id + '" style="width:100%;text-align:left;background:none;border:0;">' +
-          '<span class="m-li-lead" style="width:var(--m-lead);height:var(--m-lead);border-radius:var(--radius-full);background:var(--gray-3);display:grid;place-content:center;">' + icon(it.icon, 20) + '</span>' +
+        return '<button class="m-list-item state-layer m-row-btn" data-open="' + it.id + '" >' +
+          '<span class="m-li-lead is-disc">' + icon(it.icon, 20) + '</span>' +
           '<span class="m-li-text"><span class="m-li-title">' + esc(it.title) + '</span>' +
           (it.sub ? '<span class="m-li-sub">' + esc(it.sub) + '</span>' : '') + '</span>' +
           '<span class="m-li-trail">' + icon('chevron', 20) + '</span></button>';
       }).join('') + '</div></div>');
     });
 
-    h.push('<div style="padding:var(--space-6) var(--m-inset);">' +
-      '<button class="m-btn m-btn-outlined state-layer" id="signOut" style="width:100%;">' + icon('logout', 18) + ' Sign out</button>' +
-      '<div style="text-align:center;margin-top:var(--space-4);font-size:var(--m-fs-meta);color:var(--fg-subtle);">skySchedule &middot; prototype build</div></div>');
+    h.push('<div class="m-footer-action">' +
+      '<button class="m-btn m-btn-outlined state-layer u-full" id="signOut" >' + icon('logout', 18) + ' Sign out</button>' +
+      '<div class="m-note is-center u-mt-4">skySchedule &middot; prototype build</div></div>');
 
     $('#moreBody').innerHTML = h.join('');
     $$('[data-open]', $('#moreBody')).forEach(function (b) {
@@ -627,7 +625,7 @@
 
   function simpleList(title, items) {
     fullscreen({ title: title, back: true, onBack: function () {}, flush: true,
-      body: '<div class="m-stack" style="padding-top:var(--space-4);">' + card(items.map(function (it) {
+      body: '<div class="m-stack is-top">' + card(items.map(function (it) {
         return '<div class="m-list-item"><span class="m-li-text">' +
           '<span class="m-li-title">' + esc(it.title) + '</span>' +
           (it.sub ? '<span class="m-li-sub">' + esc(it.sub) + '</span>' : '') + '</span></div>';
@@ -641,9 +639,9 @@
       ['Weekly schedule summary', true]
     ];
     fullscreen({ title: 'Notifications', back: true, onBack: function () {}, flush: true,
-      body: '<div class="m-stack" style="padding-top:var(--space-4);">' + card(rows.map(function (r) {
-        return '<label class="m-switch" style="gap:var(--space-3);justify-content:space-between;width:100%;padding:var(--space-3) var(--m-card-pad);">' +
-          '<span style="flex:1;font-size:var(--m-fs-body);">' + esc(r[0]) + '</span>' +
+      body: '<div class="m-stack is-top">' + card(rows.map(function (r) {
+        return '<label class="m-switch is-row is-padded">' +
+          '<span class="u-grow u-body">' + esc(r[0]) + '</span>' +
           '<input type="checkbox"' + (r[1] ? ' checked' : '') + ' /></label>';
       }).join('')) + '</div>' });
   }
@@ -671,12 +669,12 @@
         var day = S.DAYS[s.day];
         return '<div style="display:flex;gap:var(--space-3);padding:var(--space-3) 0;border-bottom:1px solid var(--border-subtle);">' +
           '<span style="color:var(--' + (s.status === 'unfulfilled' ? 'danger' : 'warning') + '-solid);flex:none;">' + icon('warn', 20) + '</span>' +
-          '<span style="font-size:var(--m-fs-body);">' + esc(s.position) + ' shift on ' + esc(day.short + ' ' + day.label) +
+          '<span class="u-body">' + esc(s.position) + ' shift on ' + esc(day.short + ' ' + day.label) +
           ' is ' + esc(s.status) + '.</span></div>';
       }).join('') : '') +
       '<div style="display:flex;gap:var(--space-3);padding:var(--space-3) 0;">' +
-        '<span style="color:var(--info-solid);flex:none;">' + icon('users', 20) + '</span>' +
-        '<span style="font-size:var(--m-fs-body);">' + S.REVIEWS.length + ' requests are waiting on your review.</span></div>'
+        icon('users', 20, 'info') +
+        '<span class="u-body">' + S.REVIEWS.length + ' requests are waiting on your review.</span></div>'
     });
   });
 

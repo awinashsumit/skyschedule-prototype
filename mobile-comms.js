@@ -37,7 +37,7 @@
   });
 
   function templatesHtml() {
-    return '<div style="padding:var(--space-2) var(--m-inset) var(--space-4);font-size:var(--m-fs-body);line-height:var(--m-lh-body);color:var(--fg-low);">' +
+    return '<div class="m-intro">' +
       'Start from a template rather than writing an SMS and an email from scratch.</div>' +
       '<div class="m-stack">' + S.TEMPLATES.map(function (t) {
         var sms = S.smsInfo(t.sms);
@@ -50,10 +50,10 @@
               sms.parts + ' SMS part' + (sms.parts === 1 ? '' : 's') + ' · ' + sms.chars + ' chars</span>' +
           '</span>' +
           '<span class="m-li-trail">' +
-            '<button class="m-btn m-btn-tonal state-layer" data-use="' + t.id + '" style="padding:0 var(--m-inset);">Use</button>' +
+            '<button class="m-btn m-btn-tonal state-layer u-inset" data-use="' + t.id + '" >Use</button>' +
           '</span></div>';
       }).join('') + '</div>' +
-      '<div style="padding:var(--space-5) var(--m-inset);"><button class="m-btn m-btn-outlined state-layer" id="newTpl" style="width:100%;">' +
+      '<div class="m-footer-action"><button class="m-btn m-btn-outlined state-layer u-full" id="newTpl" >' +
       icon('plus', 18, 2) + ' New template</button></div>';
   }
 
@@ -78,7 +78,7 @@
         return '<div class="m-list-item state-layer" data-msg="' + m.id + '">' +
           '<span class="m-li-lead"><span class="m-avatar is-sm av-' + m.senderAvatar + '">' + esc(m.senderInitials) + '</span></span>' +
           '<span class="m-li-text">' +
-            '<span class="m-li-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(m.rendered) + '</span>' +
+            '<span class="m-li-title u-truncate">' + esc(m.rendered) + '</span>' +
             '<span class="m-li-sub">' + esc(sub) + '</span></span>' +
           '<span class="m-li-trail">' +
             (m.status === 'sent' ? (failed ? A.badge('unfulfilled').replace('Unfulfilled', 'Issues') : '')
@@ -100,9 +100,9 @@
       title: t.name, back: true, onBack: function () {}, flush: true,
       body:
         '<div class="m-sec-head"><h2>SMS</h2><span class="m-sec-sub">' + sms.parts + ' part' + (sms.parts === 1 ? '' : 's') + ' · ' + sms.encoding + '</span></div>' +
-        '<div style="padding:0 var(--m-inset);"><div class="m-review-msg">' + esc(t.sms) + '</div></div>' +
-        '<div style="padding:var(--space-2) var(--m-inset);font-size:var(--m-fs-meta);color:var(--fg-subtle);">As ' + esc(sample.first) + ' receives it:</div>' +
-        '<div style="padding:0 var(--m-inset);"><div class="m-review-msg" style="background:var(--accent-3);">' +
+        '<div class="u-inset"><div class="m-review-msg">' + esc(t.sms) + '</div></div>' +
+        '<div class="m-note">As ' + esc(sample.first) + ' receives it:</div>' +
+        '<div class="u-inset"><div class="m-review-msg" style="background:var(--accent-3);">' +
           esc(S.renderTokens(t.sms, sample)) + '</div></div>' +
         '<div class="m-sec-head"><h2>Email</h2></div>' +
         A.kv('Subject', t.emailSubject) +
@@ -112,11 +112,11 @@
           tokensIn(t.sms + ' ' + t.emailSubject + ' ' + t.emailBody).map(function (k) {
             return '<span class="m-badge is-neutral">{' + esc(k) + '}</span>';
           }).join('') + '</div>' +
-        '<div class="m-stack" style="padding-bottom:var(--space-5);">' + A.card(
+        '<div class="m-stack is-bottom">' + A.card(
           A.kv('Visibility', t.shared ? 'Shared with the team' : 'Only you') +
           A.kv('Used', t.usedCount + ' times, last on ' + t.lastUsed)) + '</div>',
-      actions: '<button class="m-btn m-btn-outlined state-layer" data-edit style="flex:1;">Edit</button>' +
-               '<button class="m-btn m-btn-filled state-layer" data-use style="flex:1;">Use this</button>',
+      actions: '<button class="m-btn m-btn-outlined state-layer u-grow" data-edit >Edit</button>' +
+               '<button class="m-btn m-btn-filled state-layer u-grow" data-use >Use this</button>',
       wire: function (n) {
         $('[data-use]', n).addEventListener('click', function () { A.pop(); compose({ template: t }); });
         $('[data-edit]', n).addEventListener('click', function () { A.snack('Template editing opens on the desktop for now'); });
@@ -156,15 +156,15 @@
         '<div class="m-sec-head"><h2>Delivery</h2></div>' +
         '<div class="m-stack">' + A.card(chRow('SMS', ch.sms) + chRow('Email', ch.email) + chRow('Push', ch.push)) + '</div>' +
         (ch.sms.failed
-          ? '<div class="m-alert is-warning" style="margin-top:var(--space-3);">' + icon('warn', 18) +
+          ? '<div class="m-alert is-warning u-mt-3">' + icon('warn', 18) +
             '<span>' + ch.sms.failed + ' SMS failed. The number was unreachable at the carrier. Email still went through.</span></div>'
           : ''),
       actions: m.status === 'draft'
-        ? '<button class="m-btn m-btn-outlined state-layer" data-del style="flex:1;">Delete</button>' +
-          '<button class="m-btn m-btn-filled state-layer" data-resume style="flex:1;">Continue</button>'
+        ? '<button class="m-btn m-btn-outlined state-layer u-grow" data-del >Delete</button>' +
+          '<button class="m-btn m-btn-filled state-layer u-grow" data-resume >Continue</button>'
         : m.status === 'scheduled'
-        ? '<button class="m-btn m-btn-danger state-layer" data-cancel style="flex:1;">Cancel send</button>'
-        : '<button class="m-btn m-btn-outlined state-layer" data-again style="flex:1;">Send again</button>',
+        ? '<button class="m-btn m-btn-danger state-layer u-grow" data-cancel >Cancel send</button>'
+        : '<button class="m-btn m-btn-outlined state-layer u-grow" data-again >Send again</button>',
       wire: function (n) {
         var c = $('[data-cancel]', n);
         if (c) c.addEventListener('click', function () {
@@ -302,8 +302,7 @@
         '</div>' +
         '<div class="m-stack"><div class="m-card is-rows">' + c.map(function (x) {
           return '<button class="m-ready-row state-layer" data-open="' + x.key + '">' +
-            '<span class="m-ready-icon" style="color:var(--' + (x.ok ? 'success' : 'danger') + '-solid);">' +
-              icon(x.ok ? 'checkCircle' : 'warn', 24) + '</span>' +
+            '<span class="m-ready-icon">' + icon(x.ok ? 'checkCircle' : 'warn', 24, x.ok ? 'success' : 'danger') + '</span>' +
             '<span class="m-ready-text"><span class="m-ready-label">' + esc(x.label) + '</span>' +
             '<span class="m-ready-sub' + (x.ok ? '' : ' is-error') + '">' + esc(x.sub) + '</span></span>' +
             icon('chevron', 20) + '</button>';
@@ -320,7 +319,7 @@
       if (m.channels.push) rows.push(['Push ' + r.push + ' of ' + r.total, r.pushWhy.join(', '), r.push === r.total]);
       if (!rows.length) return '';
       return '<div class="m-sec-head"><h2>Who this reaches</h2></div>' +
-        '<div class="m-stack" style="padding-bottom:var(--space-5);"><div class="m-card"><div class="m-reach">' +
+        '<div class="m-stack is-bottom"><div class="m-card"><div class="m-reach">' +
         rows.map(function (x) {
           return '<div class="m-reach-row is-' + (x[2] ? 'ok' : 'blocked') + '">' +
             '<span class="m-reach-label">' + esc(x[0]) + '</span>' +
@@ -332,8 +331,8 @@
       title: 'New message', flush: true,
       trail: '<span class="m-badge is-neutral">Draft</span>',
       body: bodyHtml(),
-      actions: '<button class="m-btn m-btn-outlined state-layer" data-later style="flex:1;">Finish later</button>' +
-               '<button class="m-btn m-btn-filled state-layer" data-goreview style="flex:1;">Review</button>',
+      actions: '<button class="m-btn m-btn-outlined state-layer u-grow" data-later >Finish later</button>' +
+               '<button class="m-btn m-btn-filled state-layer u-grow" data-goreview >Review</button>',
       wire: function (n) {
         function refresh() {
           $('#fsBody', n).innerHTML = bodyHtml();
@@ -421,8 +420,8 @@
                 : k === 'email' ? r.email + ' of ' + r.total + ' reachable'
                 : r.push + ' of ' + r.total + ' reachable' + (r.pushWhy.length ? ' · ' + r.pushWhy.join(', ') : '');
               return '<label class="m-switch" style="gap:var(--space-3);justify-content:space-between;width:100%;padding:var(--space-3) 0;border-bottom:1px solid var(--border-subtle);">' +
-                '<span style="flex:1;"><span style="display:block;font-size:var(--m-fs-body);font-weight:var(--weight-medium);">' + label + '</span>' +
-                '<span style="display:block;font-size:var(--m-fs-meta);color:var(--fg-low);">' + esc(sub) + '</span></span>' +
+                '<span class="u-grow"><span style="display:block;font-size:var(--m-fs-body);font-weight:var(--weight-medium);">' + label + '</span>' +
+                '<span class="u-meta-low">' + esc(sub) + '</span></span>' +
                 '<input type="checkbox" data-ch="' + k + '"' + (m.channels[k] ? ' checked' : '') + ' /></label>';
             }).join('') +
             (m.channels.sms && m.sms ? '<div style="margin-top:var(--space-3);font-size:var(--m-fs-meta);color:var(--fg-low);">' +
@@ -444,15 +443,15 @@
             body: '<label class="m-field"><span class="m-field-label">Message</span>' +
                 '<textarea class="m-textarea" id="smsText" rows="5" placeholder="Keep it short. SMS is billed per part.">' + esc(m.sms) + '</textarea>' +
                 '<span class="m-field-hint" id="smsMeta"></span></label>' +
-              '<div class="m-sec-head" style="padding-left:0;padding-right:0;"><h2>Merge fields</h2></div>' +
+              '<div class="m-sec-head" ><h2>Merge fields</h2></div>' +
               '<div style="display:flex;flex-wrap:wrap;gap:var(--space-2);">' +
                 ['firstName', 'position', 'location', 'date', 'shiftDate', 'shiftWindow', 'link', 'org'].map(function (k) {
                   return '<button class="m-chip state-layer" data-token="' + k + '">{' + k + '}</button>';
                 }).join('') + '</div>' +
-              '<div class="m-sec-head" style="padding-left:0;padding-right:0;"><h2>Preview</h2>' +
+              '<div class="m-sec-head" ><h2>Preview</h2>' +
                 (sample ? '<span class="m-sec-sub">as ' + esc(sample.first) + '</span>' : '') + '</div>' +
               '<div class="m-review-msg" id="smsPreview"></div>',
-            actions: '<button class="m-btn m-btn-filled state-layer" data-save style="flex:1;">Done</button>',
+            actions: '<button class="m-btn m-btn-filled state-layer u-grow" data-save >Done</button>',
             wire: function (fn) {
               var ta = $('#smsText', fn);
               function upd() {
@@ -489,13 +488,13 @@
             body: '<label class="m-field"><span class="m-field-label">Subject</span>' +
                 '<input class="m-input" id="emSub" value="' + esc(m.subject) + '" placeholder="Subject line" />' +
                 '<span class="m-field-hint is-error" id="emSubErr" hidden>Add a subject line</span></label>' +
-              '<label class="m-field" style="margin-top:var(--space-4);"><span class="m-field-label">Body</span>' +
+              '<label class="m-field u-mt-4"><span class="m-field-label">Body</span>' +
                 '<textarea class="m-textarea" id="emBody" rows="8">' + esc(m.emailBody) + '</textarea></label>' +
-              '<div class="m-sec-head" style="padding-left:0;padding-right:0;"><h2>Preview</h2>' +
+              '<div class="m-sec-head" ><h2>Preview</h2>' +
                 (sample ? '<span class="m-sec-sub">as ' + esc(sample.first) + '</span>' : '') + '</div>' +
               '<div style="font-size:var(--m-fs-body);font-weight:var(--weight-bold);margin-bottom:var(--space-2);" id="emSubPrev"></div>' +
               '<div class="m-review-msg" id="emBodyPrev"></div>',
-            actions: '<button class="m-btn m-btn-filled state-layer" data-save style="flex:1;">Done</button>',
+            actions: '<button class="m-btn m-btn-filled state-layer u-grow" data-save >Done</button>',
             wire: function (fn) {
               var s = $('#emSub', fn), b2 = $('#emBody', fn);
               function upd() {
@@ -568,8 +567,8 @@
       title: 'Review', back: true, onBack: back, flush: true,
       body:
         '<div class="m-review-block"><div class="m-review-k">Going to</div>' +
-          '<div style="font-size:var(--m-fs-body);font-weight:var(--weight-medium);">' + esc(m.audience.label) + '</div>' +
-          '<div style="font-size:var(--m-fs-body);color:var(--fg-low);">' + m.audience.people.length +
+          '<div class="u-body u-medium">' + esc(m.audience.label) + '</div>' +
+          '<div class="u-body-low">' + m.audience.people.length +
           (m.audience.people.length === 1 ? ' person' : ' people') + ' · ' + esc(m.whenLabel) + '</div></div>' +
 
         (m.channels.sms
@@ -599,8 +598,8 @@
           : '<div class="m-alert is-info">' + icon('checkCircle', 18) +
             '<span>Every person in this audience is reachable on at least one selected channel.</span></div>'),
 
-      actions: '<button class="m-btn m-btn-outlined state-layer" data-close style="flex:1;">Back</button>' +
-               '<button class="m-btn m-btn-filled state-layer" data-send style="flex:1;">' +
+      actions: '<button class="m-btn m-btn-outlined state-layer u-grow" data-close >Back</button>' +
+               '<button class="m-btn m-btn-filled state-layer u-grow" data-send >' +
                (m.when === 'now' ? 'Send now' : 'Schedule') + '</button>',
       wire: function (n) {
         $('[data-send]', n).addEventListener('click', function () {

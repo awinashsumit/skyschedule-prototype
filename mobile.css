@@ -73,6 +73,12 @@
      circular counters and small avatars - nowhere in running text. */
   --m-fs-micro: 11px;
 
+  /* Card elevation. Deliberately NOT --shadow-2: that recipe starts with a
+     1px ring, which on a white card over a near-white canvas reads as a
+     border on some cards and vanishes on others. A ringless shadow lifts
+     every card identically. */
+  --m-shadow-card: 0 1px 2px rgba(0,0,0,.05), 0 6px 16px -6px rgba(0,0,0,.10);
+
   /* Brand amber for the active tab. Points at the token rather than a raw
      hex so dark mode and any future brand change follow automatically.
      Note: 1.79:1 on white. Chosen for brand fidelity over contrast at
@@ -439,7 +445,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
      almost-white canvas is invisible at arm's length; a soft shadow is
      what makes the card read as a separate object. */
   border-radius: var(--m-radius-card);
-  box-shadow: var(--shadow-2);
+  box-shadow: var(--m-shadow-card);
   padding: var(--m-card-pad);
 }
 /* Vertical run of cards on the canvas. This is the default page layout:
@@ -450,10 +456,17 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    INSIDE a card, where a divider means "same group, next item". */
 .m-card.is-rows { padding: 0; overflow: hidden; }
 .m-card.is-rows > * + * { border-top: 1px solid var(--border-subtle); }
+/* ...except between shifts. Each shift already carries a full-height status
+   rail, so a rule between them is a third separator doing the job of the
+   first two. Space plus the rail is enough. */
+.m-card.is-rows > .m-shift + .m-shift { border-top: 0; }
 .m-chip {
   position: relative;
   display: inline-flex; align-items: center; gap: var(--space-1);
-  min-height: 40px; padding: 0 var(--space-4);
+  /* flex:none, or the row's overflow-x lets every chip shrink below its
+     own text and each label ends up clipped mid-word. */
+  flex: none;
+  min-height: 36px; padding: 0 var(--space-3);
   border-radius: var(--m-radius-chip);
   box-shadow: inset 0 0 0 1px var(--border-ui);
   font-size: var(--m-fs-meta); font-weight: var(--weight-medium);
@@ -480,9 +493,14 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .m-segmented { display: flex; border-radius: var(--radius-full); box-shadow: inset 0 0 0 1px var(--border-ui); overflow: hidden; }
 .m-segmented-item {
-  flex: 1; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1);
-  font-size: var(--m-fs-body); font-weight: var(--weight-medium); color: var(--fg-low);
+  /* 40px visual with a 44px hit area, the same trick the chips use. At 48px
+     and 16px type this control was reading as a page heading rather than a
+     switch between two lists. */
+  position: relative;
+  flex: 1; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1);
+  font-size: var(--m-fs-meta); font-weight: var(--weight-semibold); color: var(--fg-low);
 }
+.m-segmented-item::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); height: var(--m-touch); }
 .m-segmented-item.is-active { background: var(--accent-3); color: var(--accent-11); }
 
 /* ============================================================
@@ -580,8 +598,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   padding: var(--space-5) var(--m-inset) var(--space-3);
   background: var(--color-page);
 }
-.m-day-header .m-day-num { min-width: 32px; font-size: var(--m-fs-head); line-height: var(--m-lh-head); font-weight: var(--weight-bold); color: var(--fg-high); font-variant-numeric: tabular-nums; }
-.m-day-header .m-day-name { font-size: var(--m-fs-body); font-weight: var(--weight-medium); color: var(--fg-low); }
+/* A date is context for the shifts under it, not the subject of the screen.
+   At 24px bold it out-shouted the 16px shift rows it was labelling. */
+.m-day-header .m-day-num { min-width: 28px; font-size: var(--m-fs-title); line-height: var(--m-lh-title); font-weight: var(--weight-bold); color: var(--fg-high); font-variant-numeric: tabular-nums; }
+.m-day-header .m-day-name { font-size: var(--m-fs-meta); font-weight: var(--weight-semibold); letter-spacing: .04em; text-transform: uppercase; color: var(--fg-low); }
 .m-day-header .m-day-count { margin-left: auto; font-size: var(--m-fs-meta); color: var(--fg-subtle); }
 .m-day-header.is-today .m-day-num { color: var(--accent-11); }
 .m-day-header.is-today .m-day-name::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: var(--space-2); border-radius: var(--radius-full); background: var(--accent-9); vertical-align: middle; }
@@ -663,7 +683,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .m-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: var(--m-gap); padding: 0 var(--m-inset); }
 .m-kpi {
   background: var(--color-panel-solid); border-radius: var(--m-radius-card);
-  box-shadow: var(--shadow-2);
+  box-shadow: var(--m-shadow-card);
   padding: var(--m-card-pad); display: flex; flex-direction: column; gap: var(--space-1);
 }
 /* The number carries the card. 32px against a 13px label is the contrast
@@ -673,12 +693,12 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .m-kpi .m-kpi-delta { font-size: var(--m-fs-meta); font-weight: var(--weight-semibold); }
 .m-kpi .m-kpi-delta.is-up { color: var(--success-text); }
 .m-kpi .m-kpi-delta.is-down { color: var(--danger-text); }
-.m-kpi.is-alert { box-shadow: var(--shadow-2), inset 0 0 0 1.5px var(--danger-border); }
+.m-kpi.is-alert { box-shadow: var(--m-shadow-card), inset 0 0 0 1.5px var(--danger-border); }
 .m-kpi.is-alert .m-kpi-val { color: var(--danger-text); }
 
 /* Attention card: the one thing on Home that is a queue rather than a
    readout. Amber is deliberately absent - the severity lives in the rows. */
-.m-attn { margin: 0 var(--m-inset); background: var(--color-panel-solid); border-radius: var(--m-radius-card); box-shadow: var(--shadow-2); overflow: hidden; }
+.m-attn { margin: 0 var(--m-inset); background: var(--color-panel-solid); border-radius: var(--m-radius-card); box-shadow: var(--m-shadow-card); overflow: hidden; }
 .m-attn-head { display: flex; align-items: center; gap: var(--space-3); padding: var(--m-card-pad) var(--m-card-pad) var(--space-3); }
 .m-attn-head .m-attn-title { flex: 1; font-size: var(--m-fs-title); line-height: var(--m-lh-title); font-weight: var(--weight-bold); }
 .m-attn-row { display: flex; align-items: center; gap: var(--m-lead-gap); width: 100%; padding: var(--space-3) var(--m-card-pad); text-align: left; }
@@ -697,7 +717,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .m-attn-foot { padding: var(--space-2) var(--space-3) var(--space-3); border-top: 1px solid var(--border-subtle); }
 
 /* Community post */
-.m-post { padding: var(--m-card-pad); background: var(--color-panel-solid); border-radius: var(--m-radius-card); box-shadow: var(--shadow-2); }
+.m-post { padding: var(--m-card-pad); background: var(--color-panel-solid); border-radius: var(--m-radius-card); box-shadow: var(--m-shadow-card); }
 .m-post-head { display: flex; align-items: center; gap: var(--m-lead-gap); margin-bottom: var(--space-3); }
 .m-post-head .m-post-who { flex: 1; min-width: 0; }
 .m-post-head .m-post-name { display: block; font-size: var(--m-fs-body); font-weight: var(--weight-semibold); color: var(--fg-high); }
@@ -768,3 +788,96 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    sheet opened from a full-screen flow paints above it, and Escape can
    pop exactly one layer instead of collapsing the whole stack. */
 .m-layer { position: fixed; inset: 0; z-index: 100; }
+
+/* ============================================================
+   UTILITIES
+   A deliberately small set. Everything here replaces an inline
+   style that was repeated across screens; anything used once
+   still belongs in a named component rule, not here.
+   ============================================================ */
+.u-grow { flex: 1; }
+.u-full { width: 100%; }
+.u-center { text-align: center; }
+
+/* Icon box. icon() emits this instead of writing width/height inline at
+   every one of the ~90 call sites. Lucide merges its own classes onto the
+   svg it creates, so the sizing survives the swap. */
+.m-ico { display: inline-flex; flex: none; width: 24px; height: 24px; }
+.m-ico.is-16 { width: 16px; height: 16px; }
+.m-ico.is-18 { width: 18px; height: 18px; }
+.m-ico.is-20 { width: 20px; height: 20px; }
+.m-ico.is-22 { width: 22px; height: 22px; }
+.m-ico.is-28 { width: 28px; height: 28px; }
+.m-ico.is-subtle { color: var(--fg-subtle); }
+.m-ico.is-danger { color: var(--danger-text); }
+.m-ico.is-warning { color: var(--warning-solid); }
+.m-ico.is-success { color: var(--success-solid); }
+.m-ico.is-info { color: var(--info-solid); }
+
+/* A list row that is a button. Strips the UA button chrome so it sits in a
+   card exactly like the non-interactive rows beside it. */
+.m-row-btn { width: 100%; text-align: left; background: none; border: 0; cursor: pointer; font: inherit; color: inherit; }
+
+/* Leading element rendered as a tinted disc, for rows led by an icon
+   rather than an avatar - keeps both kinds of row on the same left edge. */
+.m-li-lead.is-disc { width: var(--m-lead); height: var(--m-lead); border-radius: var(--radius-full); background: var(--gray-3); display: grid; place-content: center; }
+.m-li-lead.is-disc.is-danger { background: var(--danger-bg); color: var(--danger-text); }
+
+/* Both action bars stretch their buttons to fill; previously every button
+   carried style="flex:1" at the call site. */
+.m-fs-actions .m-btn { flex: 1; }
+
+/* Explanatory paragraph under a heading, and a small muted caption. */
+.m-intro { padding: var(--space-2) var(--m-inset) var(--space-4); font-size: var(--m-fs-body); line-height: var(--m-lh-body); color: var(--fg-low); }
+.m-note { padding: var(--space-2) var(--m-inset); font-size: var(--m-fs-meta); line-height: var(--m-lh-meta); color: var(--fg-subtle); }
+.m-note.is-center { text-align: center; padding: var(--space-5) var(--m-inset); }
+
+/* Sheet body holding full-bleed rows rather than padded content. */
+.m-sheet-body.is-rows { padding-left: 0; padding-right: 0; }
+
+/* Stack spacing variants, replacing inline padding-top / padding-bottom. */
+.m-stack.is-top { padding-top: var(--space-4); }
+.m-stack.is-bottom { padding-bottom: var(--space-5); }
+
+/* Full-width primary action sitting on the canvas below a list. */
+.m-footer-action { padding: var(--space-5) var(--m-inset); }
+
+/* --- second extraction pass ------------------------------------------- */
+.u-mt-2 { margin-top: var(--space-2); }
+.u-mt-3 { margin-top: var(--space-3); }
+.u-mt-4 { margin-top: var(--space-4); }
+.u-nowrap { white-space: nowrap; }
+.u-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.u-danger { color: var(--danger-text); }
+.u-inset { padding: 0 var(--m-inset); }
+.u-inset-y { padding: var(--space-5) var(--m-inset); }
+.u-body { font-size: var(--m-fs-body); line-height: var(--m-lh-body); }
+.u-body-low { font-size: var(--m-fs-body); line-height: var(--m-lh-body); color: var(--fg-low); }
+.u-meta-low { display: block; font-size: var(--m-fs-meta); line-height: var(--m-lh-meta); color: var(--fg-low); }
+.u-title { font-size: var(--m-fs-title); line-height: var(--m-lh-title); font-weight: var(--weight-bold); }
+.u-medium { font-weight: var(--weight-medium); }
+.u-eyebrow { font-size: var(--m-fs-meta); font-weight: var(--weight-semibold); text-transform: uppercase; letter-spacing: .05em; color: var(--fg-low); }
+.u-count { display: inline-flex; align-items: center; gap: 6px; }
+/* A row inside a card that is a full-width tappable target. */
+.m-card-row { width: 100%; text-align: left; padding: var(--space-4) var(--m-card-pad); }
+
+/* Week stepper above the agenda: previous / range / next. */
+.m-rangebar {
+  display: flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-2); background: var(--color-panel-solid);
+  border-bottom: 1px solid var(--border-subtle);
+}
+/* Count riding the corner of an icon button, e.g. the active filter count. */
+.m-icon-badge {
+  position: absolute; top: 2px; right: 2px;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  font-size: var(--m-fs-micro);
+}
+/* A switch presented as a full-width row: label left, control right. */
+.m-switch.is-row { display: flex; gap: var(--space-3); justify-content: space-between; width: 100%; }
+.m-switch.is-row.is-padded { padding: var(--space-3) var(--m-card-pad); }
+
+/* Lucide ships stroke-width 2. The mobile set is drawn at 1.75 to sit
+   with Inter's weight; set once here rather than passing an override
+   through every icon() call. */
+svg.lucide { stroke-width: 1.75; }

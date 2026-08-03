@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./mobile.css?v=25" />
+  <link rel="stylesheet" href="./mobile.css?v=28" />
 </head>
 <body>
 <div class="m-app">
@@ -28,13 +28,13 @@
   <section class="m-view" id="v-home">
     <header class="m-appbar">
       <button class="m-appbar-scope state-layer" data-sheet="location" aria-label="Change location">
-        <i data-lucide="map-pin" style="width:20px;height:20px;display:inline-flex;flex:none;"></i>
+        <i data-lucide="map-pin" class="m-ico is-20"></i>
         <span class="m-scope-name" id="homeLocation">Skypoint Main Campus</span>
-        <i data-lucide="chevron-down" style="width:16px;height:16px;display:inline-flex;flex:none;opacity:.6;"></i>
+        <i data-lucide="chevron-down" class="m-ico is-16 is-subtle"></i>
       </button>
-      <span style="flex:1;"></span>
+      <span class="u-grow"></span>
       <button class="m-icon-btn state-layer" data-sheet="notifications" aria-label="Notifications">
-        <i data-lucide="bell" style="width:24px;height:24px;display:inline-flex;flex:none;"></i>
+        <i data-lucide="bell" class="m-ico"></i>
       </button>
       <button class="m-icon-btn state-layer" data-goto="more" aria-label="Your account">
         <span class="m-avatar is-sm av-c5">SA</span>
@@ -49,27 +49,27 @@
     <header class="m-appbar">
       <span class="m-appbar-title">Schedule</span>
       <button class="m-icon-btn state-layer" id="schedSearchBtn" aria-label="Search shifts">
-        <i data-lucide="search" style="width:24px;height:24px;display:inline-flex;flex:none;"></i>
+        <i data-lucide="search" class="m-ico"></i>
       </button>
       <button class="m-icon-btn state-layer" data-sheet="schedFilter" aria-label="Filter shifts">
-        <i data-lucide="list-filter" style="width:24px;height:24px;display:inline-flex;flex:none;"></i>
-        <span class="m-badge is-info" id="schedFilterCount" hidden style="position:absolute;top:2px;right:2px;min-width:16px;padding:0 4px;height:16px;font-size:10px;">0</span>
+        <i data-lucide="list-filter" class="m-ico"></i>
+        <span class="m-badge is-info m-icon-badge" id="schedFilterCount" hidden>0</span>
       </button>
     </header>
 
     <!-- Range control. A tap opens the month sheet; the chevrons step a
          week. No horizontal date strip - a swipeable rail hides most of
          the range behind a gesture with no affordance. -->
-    <div style="display:flex;align-items:center;gap:var(--space-1);padding:var(--space-2) var(--space-2);border-bottom:1px solid var(--border-subtle);background:var(--color-panel-solid);">
+    <div class="m-rangebar">
       <button class="m-icon-btn state-layer" id="weekPrev" aria-label="Previous week">
-        <i data-lucide="chevron-left" style="width:22px;height:22px;display:inline-flex;flex:none;"></i>
+        <i data-lucide="chevron-left" class="m-ico is-22"></i>
       </button>
       <button class="m-btn m-btn-text state-layer" id="rangeBtn" style="flex:1;font-weight:var(--weight-medium);">
         <span id="rangeLabel">Jul 26 &ndash; Aug 1</span>
-        <i data-lucide="chevron-down" style="width:18px;height:18px;display:inline-flex;flex:none;margin-left:6px;"></i>
+        <i data-lucide="chevron-down" class="m-ico is-18"></i>
       </button>
       <button class="m-icon-btn state-layer" id="weekNext" aria-label="Next week">
-        <i data-lucide="chevron-right" style="width:22px;height:22px;display:inline-flex;flex:none;"></i>
+        <i data-lucide="chevron-right" class="m-ico is-22"></i>
       </button>
     </div>
 
@@ -84,7 +84,7 @@
     <main class="m-body is-flush has-fab" id="schedBody"></main>
 
     <button class="m-fab is-extended state-layer" id="fabShift">
-      <i data-lucide="plus" style="width:22px;height:22px;display:inline-flex;flex:none;"></i>
+      <i data-lucide="plus" class="m-ico is-22"></i>
       Create shift
     </button>
   </section>
@@ -94,13 +94,13 @@
     <header class="m-appbar">
       <span class="m-appbar-title">BFMs</span>
       <button class="m-icon-btn state-layer" data-sheet="bfmSort" aria-label="Sort">
-        <i data-lucide="arrow-down-narrow-wide" style="width:24px;height:24px;display:inline-flex;flex:none;"></i>
+        <i data-lucide="arrow-down-narrow-wide" class="m-ico"></i>
       </button>
     </header>
 
     <div class="m-section" style="padding-bottom:var(--space-2);">
       <div class="m-search">
-        <i data-lucide="search" style="width:20px;height:20px;display:inline-flex;flex:none;color:var(--fg-subtle);"></i>
+        <i data-lucide="search" class="m-ico is-20 is-subtle"></i>
         <input id="bfmSearch" placeholder="Search name, position or ID" autocomplete="off" />
       </div>
     </div>
@@ -115,7 +115,7 @@
     <main class="m-body is-flush has-fab" id="bfmBody"></main>
 
     <button class="m-fab state-layer" id="fabBfm" aria-label="Add BFM">
-      <i data-lucide="plus" style="width:22px;height:22px;display:inline-flex;flex:none;"></i>
+      <i data-lucide="plus" class="m-ico is-22"></i>
     </button>
   </section>
 
@@ -135,7 +135,7 @@
     <main class="m-body is-flush has-fab" id="msgBody"></main>
 
     <button class="m-fab is-extended state-layer" id="fabCompose">
-      <i data-lucide="pencil" style="width:22px;height:22px;display:inline-flex;flex:none;"></i>
+      <i data-lucide="pencil" class="m-ico is-22"></i>
       Compose
     </button>
   </section>
@@ -206,10 +206,10 @@
 
 <!-- Order matters: data, then the core (which creates APP and renders Home),
      then each screen module, which registers itself against APP. -->
-<script src="./mobile-data.js?v=25"></script>
-<script src="./mobile-app.js?v=25"></script>
-<script src="./mobile-schedule.js?v=25"></script>
-<script src="./mobile-people.js?v=25"></script>
-<script src="./mobile-comms.js?v=25"></script>
+<script src="./mobile-data.js?v=28"></script>
+<script src="./mobile-app.js?v=28"></script>
+<script src="./mobile-schedule.js?v=28"></script>
+<script src="./mobile-people.js?v=28"></script>
+<script src="./mobile-comms.js?v=28"></script>
 </body>
 </html>

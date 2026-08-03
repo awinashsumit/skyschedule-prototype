@@ -72,9 +72,15 @@
 
     var h = [];
     var total = 0;
+    /* With no filter, an empty day is information - it shows the gap in the
+       week. Under a filter it is noise: "Open" showed five "No shifts" days
+       framing two results. So empty days are dropped once a filter narrows
+       the question being asked. */
+    var narrowed = n > 0 || !!query;
     for (var i = 0; i < 7; i++) {
       var list = visibleShifts(i);
       total += list.length;
+      if (narrowed && !list.length) continue;
       var t = dayDate(i);
       var isToday = weekOffset === 0 && i === S.TODAY;
       h.push('<div class="m-group">' +
@@ -96,8 +102,8 @@
           ? 'No shifts in ' + rangeLabel() + ' match the filters you have set.'
           : 'Nothing is scheduled for ' + rangeLabel() + '. Create a shift to start the week.') + '</p>' +
         (n || query
-          ? '<button class="m-btn m-btn-tonal state-layer" id="clearFilters" style="margin-top:var(--space-2);">Clear filters</button>'
-          : '<button class="m-btn m-btn-tonal state-layer" id="emptyCreate" style="margin-top:var(--space-2);">Create shift</button>') +
+          ? '<button class="m-btn m-btn-tonal state-layer u-mt-2" id="clearFilters" >Clear filters</button>'
+          : '<button class="m-btn m-btn-tonal state-layer u-mt-2" id="emptyCreate" >Create shift</button>') +
         '</div>'];
     }
 
@@ -141,7 +147,7 @@
           '<div style="font-size:var(--m-fs-body);color:var(--fg-low);margin-top:2px;">' + esc(day.dow + ', ' + day.label) + ' &middot; ' + hrs + 'h</div>' +
         '</div>' +
         (b
-          ? '<div class="m-stack"><button class="m-card m-list-item state-layer" data-profile="' + b.id + '" style="width:100%;text-align:left;padding:var(--space-3) var(--m-card-pad);">' +
+          ? '<div class="m-stack"><button class="m-card m-list-item state-layer m-card-row" data-profile="' + b.id + '" >' +
             '<span class="m-li-lead">' + A.avatar(b) + '</span>' +
             '<span class="m-li-text"><span class="m-li-title">' + esc(S.fullName(b)) + '</span>' +
             '<span class="m-li-sub">' + esc(b.primary + ' · ' + b.employment) + '</span></span>' +
@@ -161,9 +167,9 @@
           actionRow('edit', 'Edit times and position') +
           actionRow('trash', 'Delete shift', '', true)) + '</div>',
       actions: (b
-        ? '<button class="m-btn m-btn-outlined state-layer" data-unassign style="flex:1;">Unassign</button>' +
-          (s.status === 'draft' ? '<button class="m-btn m-btn-filled state-layer" data-publish style="flex:1;">Publish</button>' : '')
-        : '<button class="m-btn m-btn-filled state-layer" data-assign style="flex:1;">Assign someone</button>'),
+        ? '<button class="m-btn m-btn-outlined state-layer u-grow" data-unassign >Unassign</button>' +
+          (s.status === 'draft' ? '<button class="m-btn m-btn-filled state-layer u-grow" data-publish >Publish</button>' : '')
+        : '<button class="m-btn m-btn-filled state-layer u-grow" data-assign >Assign someone</button>'),
       wire: function (node) {
         var p = $('[data-profile]', node);
         if (p) p.addEventListener('click', function () {
@@ -204,7 +210,7 @@
       (danger ? 'color:var(--danger-text);' : '') + (disabled ? 'opacity:.45;' : '') + '">' +
       '<span class="m-li-lead" style="width:var(--m-lead);height:var(--m-lead);border-radius:var(--radius-full);display:grid;place-content:center;background:var(--' +
       (danger ? 'danger-bg' : 'gray-3') + ');' + (danger ? 'color:var(--danger-text);' : '') + '">' + icon(ic, 20) + '</span>' +
-      '<span class="m-li-text"><span class="m-li-title"' + (danger ? ' style="color:var(--danger-text);"' : '') + '>' + esc(label) + '</span></span>' +
+      '<span class="m-li-text"><span class="m-li-title"' + (danger ? ' class="u-danger"' : '') + '>' + esc(label) + '</span></span>' +
       '</button>';
   }
 
@@ -244,7 +250,7 @@
 
     if (!cands.length) {
       A.sheet({ title: 'No one is qualified',
-        body: '<p style="font-size:var(--m-fs-body);color:var(--fg-low);">Nobody active holds ' + esc(s.position) +
+        body: '<p class="u-body-low">Nobody active holds ' + esc(s.position) +
           ' as a primary or secondary position. Add it to someone in BFMs, then assign.</p>',
         actions: '<button class="m-btn m-btn-outlined state-layer" data-close>Close</button>' +
                  '<button class="m-btn m-btn-filled state-layer" data-bfms>Go to BFMs</button>',
@@ -316,32 +322,32 @@
         (dur <= 0
           ? '<div class="m-alert is-danger" style="margin:var(--space-3) var(--space-4) 0;">' + icon('warn', 18) +
             '<span>The end time must be after the start time.</span></div>'
-          : '<div style="padding:var(--space-2) var(--m-inset);font-size:var(--m-fs-meta);color:var(--fg-subtle);">' + dur + ' paid hours</div>') +
+          : '<div class="m-note">' + dur + ' paid hours</div>') +
         pickRow('location', 'Location', draft.location) +
         pickRow('assign', 'Assign to', who) +
         (editing ? '' :
           '<div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--m-inset);border-bottom:1px solid var(--border-subtle);">' +
-            '<span style="flex:1;font-size:var(--m-fs-body);">How many</span>' +
+            '<span class="u-grow u-body">How many</span>' +
             '<div class="m-stepper"><button data-qty="-1" class="state-layer" aria-label="Fewer">' + icon('minusOnly', 20) +
             '</button><span class="m-stepper-value" id="qtyVal">' + draft.qty + '</span>' +
             '<button data-qty="1" class="state-layer" aria-label="More">' + icon('plus', 20, 2) + '</button></div></div>') +
         '<label class="m-switch" style="gap:var(--space-3);justify-content:space-between;width:100%;padding:var(--m-inset);">' +
-          '<span style="flex:1;font-size:var(--m-fs-body);">Publish immediately<span style="display:block;font-size:var(--m-fs-meta);color:var(--fg-low);">Off saves it as a draft nobody sees yet</span></span>' +
+          '<span class="u-grow u-body">Publish immediately<span class="u-meta-low">Off saves it as a draft nobody sees yet</span></span>' +
           '<input type="checkbox" id="pubToggle"' + (draft.publish ? ' checked' : '') + ' /></label>';
     }
 
     function pickRow(key, label, val) {
-      return '<button class="m-list-item state-layer" data-pick="' + key + '" style="width:100%;text-align:left;background:none;border:0;">' +
-        '<span class="m-li-text"><span class="m-li-sub" style="text-transform:uppercase;letter-spacing:.05em;font-weight:var(--weight-semibold);">' + esc(label) + '</span>' +
-        '<span class="m-li-title" style="font-size:var(--m-fs-body);">' + esc(val) + '</span></span>' +
+      return '<button class="m-list-item state-layer m-row-btn" data-pick="' + key + '" >' +
+        '<span class="m-li-text"><span class="m-li-sub u-eyebrow">' + esc(label) + '</span>' +
+        '<span class="m-li-title u-body">' + esc(val) + '</span></span>' +
         '<span class="m-li-trail">' + icon('chevron', 20) + '</span></button>';
     }
 
     A.fullscreen({
       title: editing ? 'Edit shift' : 'Create shift', flush: true,
       body: bodyHtml(),
-      actions: '<button class="m-btn m-btn-outlined state-layer" data-close style="flex:1;">Cancel</button>' +
-               '<button class="m-btn m-btn-filled state-layer" data-save style="flex:1;">' +
+      actions: '<button class="m-btn m-btn-outlined state-layer u-grow" data-close >Cancel</button>' +
+               '<button class="m-btn m-btn-filled state-layer u-grow" data-save >' +
                (editing ? 'Save changes' : 'Create') + '</button>',
       wire: function wireForm(node) {
         function refresh() {
@@ -449,8 +455,8 @@
         ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(function (x) { return '<span class="m-month-dow">' + x + '</span>'; }).join('') +
         cells.join('') + '</div>' +
         '<div style="display:flex;gap:var(--space-4);margin-top:var(--space-4);font-size:var(--m-fs-meta);color:var(--fg-low);">' +
-          '<span style="display:inline-flex;align-items:center;gap:6px;"><span class="m-month-dot" style="display:inline-block;"></span> Has shifts</span>' +
-          '<span style="display:inline-flex;align-items:center;gap:6px;"><span class="m-month-dot is-danger" style="display:inline-block;"></span> Needs attention</span>' +
+          '<span class="u-count"><span class="m-month-dot" style="display:inline-block;"></span> Has shifts</span>' +
+          '<span class="u-count"><span class="m-month-dot is-danger" style="display:inline-block;"></span> Needs attention</span>' +
         '</div>',
       actions: '<button class="m-btn m-btn-outlined state-layer" data-today>Jump to today</button>' +
                '<button class="m-btn m-btn-filled state-layer" data-close>Done</button>',
@@ -470,11 +476,11 @@
         '<div style="font-size:var(--m-fs-meta);color:var(--fg-subtle);text-transform:uppercase;letter-spacing:.05em;margin-bottom:var(--space-2);">Status</div>' +
         chipSet('status', ['all', 'confirmed', 'draft', 'open', 'unfulfilled'],
           ['Any status', 'Confirmed', 'Draft', 'Open', 'Unfulfilled']) +
-        '<label class="m-field" style="margin-top:var(--space-4);"><span class="m-field-label">Position</span>' +
+        '<label class="m-field u-mt-4"><span class="m-field-label">Position</span>' +
           sel('position', ['all'].concat(S.POSITIONS), ['Any position'].concat(S.POSITIONS)) + '</label>' +
-        '<label class="m-field" style="margin-top:var(--space-4);"><span class="m-field-label">Location</span>' +
+        '<label class="m-field u-mt-4"><span class="m-field-label">Location</span>' +
           sel('location', ['all'].concat(S.LOCATIONS), ['Any location'].concat(S.LOCATIONS)) + '</label>' +
-        '<label class="m-field" style="margin-top:var(--space-4);"><span class="m-field-label">Person</span>' +
+        '<label class="m-field u-mt-4"><span class="m-field-label">Person</span>' +
           sel('person', ['all'].concat(S.BFMS.map(function (b) { return String(b.id); })),
               ['Anyone'].concat(S.BFMS.map(S.fullName))) + '</label>',
       actions: '<button class="m-btn m-btn-outlined state-layer" data-clear>Clear all</button>' +
@@ -503,7 +509,7 @@
   }
 
   function chipSet(key, values, labels) {
-    return '<div class="m-chip-row" data-chipset="' + key + '" style="padding-left:0;padding-right:0;">' +
+    return '<div class="m-chip-row" data-chipset="' + key + '" >' +
       values.map(function (v, i) {
         return '<button class="m-chip' + (v === filter[key] ? ' is-selected' : '') + ' state-layer" data-val="' + esc(v) + '">' + esc(labels[i]) + '</button>';
       }).join('') + '</div>';
