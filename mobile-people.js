@@ -54,21 +54,23 @@
        long enough to scan by letter. At ten people they add a header per
        person and make the roster look longer than it is. */
     var LETTERS_FROM = 15;
-    var h = [], lastKey = null;
+    var h = [], flat = [], lastKey = null;
     list.forEach(function (b) {
       var key = sort === 'position' ? b.primary
         : sort === 'hours' ? (hoursFor(b.id) > 0 ? 'Scheduled this week' : 'Not scheduled')
         : (list.length >= LETTERS_FROM ? S.fullName(b).charAt(0).toUpperCase() : null);
-      if (key === null) { h.push(row(b)); return; }
+      if (key === null) { flat.push(row(b)); return; }
       if (key !== lastKey) {
-        if (lastKey !== null) h.push('</div>');
-        h.push('<div class="m-group"><div class="m-list-header m-sticky">' + esc(key) + '</div>');
+        if (lastKey !== null) h.push('</div></div></div>');
+        h.push('<div class="m-group"><div class="m-list-header m-sticky">' + esc(key) + '</div>' +
+          '<div class="m-stack"><div class="m-card is-rows">');
         lastKey = key;
       }
       h.push(row(b));
     });
-    if (lastKey !== null) h.push('</div>');
-    h.push('<div style="padding:var(--space-4);text-align:center;font-size:var(--fs-1);color:var(--fg-subtle);">' +
+    if (lastKey !== null) h.push('</div></div></div>');
+    if (flat.length) h.unshift('<div class="m-stack" style="padding-top:var(--space-2);"><div class="m-card is-rows">' + flat.join('') + '</div></div>');
+    h.push('<div style="padding:var(--space-5);text-align:center;font-size:var(--m-fs-meta);color:var(--fg-subtle);">' +
       list.length + (list.length === 1 ? ' person' : ' people') + '</div>');
 
     body.innerHTML = h.join('');
@@ -80,14 +82,18 @@
   function row(b) {
     var n = shiftsFor(b.id).length;
     var ab = ACCOUNT_BADGE[b.account];
+    /* Two facts on the sub line, not three. The shift count moves to the
+       trailing edge where it is a number to compare down the column rather
+       than the tail of a sentence that pushes the row to two lines. */
     var sub = sort === 'hours' ? hoursFor(b.id) + 'h this week' : b.primary + ' · ' + b.employment;
-    return '<button class="m-list-item state-layer" data-bfm="' + b.id + '" style="width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0;">' +
+    return '<button class="m-list-item state-layer" data-bfm="' + b.id + '" style="width:100%;text-align:left;background:none;border:0;">' +
       '<span class="m-li-lead">' + A.avatar(b) + '</span>' +
       '<span class="m-li-text"><span class="m-li-title">' + esc(S.fullName(b)) + '</span>' +
-      '<span class="m-li-sub">' + esc(sub) + (n && sort !== 'hours' ? ' · ' + n + ' shift' + (n === 1 ? '' : 's') : '') + '</span></span>' +
+      '<span class="m-li-sub">' + esc(sub) + '</span></span>' +
       '<span class="m-li-trail">' +
       (b.account !== 'active' ? '<span class="m-badge ' + ab[0] + '">' + ab[1] + '</span>' : '') +
       (b.alert ? '<span style="color:var(--warning-solid);">' + icon('warn', 18) + '</span>' : '') +
+      (n && sort !== 'hours' ? '<span style="white-space:nowrap;">' + n + '</span>' : '') +
       icon('chevron', 20) + '</span></button>';
   }
 
@@ -134,52 +140,52 @@
       if (!upcoming.length) h.push(note('Nothing scheduled for the rest of this week.'));
       else {
         var showUp = expanded.up ? upcoming : upcoming.slice(0, UPCOMING_CAP);
-        h.push(showUp.map(function (s) {
+        h.push('<div class="m-stack"><div class="m-card is-rows">' + showUp.map(function (s) {
           var day = S.DAYS[s.day];
           return '<div class="m-shift is-' + s.status + ' state-layer" data-shift="' + s.id + '">' +
             '<span class="m-shift-rail"></span><span class="m-shift-body">' +
             '<span class="m-shift-time">' + esc(day.short + ', ' + day.label) + '</span>' +
             '<span class="m-shift-meta">' + esc(s.start + ' to ' + s.end + ' · ' + s.position) + '</span></span>' +
             '<span class="m-shift-trail">' + A.badge(s.status) + '</span></div>';
-        }).join(''));
+        }).join('') + '</div></div>');
         if (upcoming.length > UPCOMING_CAP)
           h.push(more('up', expanded.up ? 'Show less' : 'Show all ' + upcoming.length));
       }
 
       h.push('<div class="m-sec-head"><h2>Shift history</h2><span class="m-sec-sub">July</span></div>');
       var showH = expanded.hist ? past : past.slice(0, HISTORY_CAP);
-      h.push(showH.map(function (p) {
+      h.push('<div class="m-stack"><div class="m-card is-rows">' + showH.map(function (p) {
         return '<div class="m-shift is-confirmed"><span class="m-shift-rail"></span>' +
           '<span class="m-shift-body"><span class="m-shift-time">' + esc(p.when) + '</span>' +
           '<span class="m-shift-meta">' + esc(p.time + ' · ' + p.position) + '</span></span>' +
-          '<span class="m-shift-trail"><span style="font-size:var(--fs-1);color:var(--fg-subtle);">' + p.hours + 'h</span></span></div>';
-      }).join(''));
+          '<span class="m-shift-trail"><span style="font-size:var(--m-fs-meta);color:var(--fg-subtle);">' + p.hours + 'h</span></span></div>';
+      }).join('') + '</div></div>');
       if (past.length > HISTORY_CAP) h.push(more('hist', expanded.hist ? 'Show less' : 'Show all ' + past.length));
 
       h.push('<div class="m-sec-head"><h2>Availability</h2>' +
         '<button class="m-sec-link" data-do="avail">Edit</button></div>');
-      h.push(b.avail.map(function (a, i) {
+      h.push('<div class="m-stack">' + A.card(b.avail.map(function (a, i) {
         return '<div class="m-kv"><span class="m-kv-k">' + S.DAYS[i].dow + '</span>' +
           '<span class="m-kv-v' + (a.on ? '' : ' is-empty') + '">' + (a.on ? esc(a.from + ' to ' + a.to) : 'Unavailable') + '</span></div>';
-      }).join(''));
+      }).join('')) + '</div>');
 
       if (b.timeOff.length) {
         h.push('<div class="m-sec-head"><h2>Time off</h2></div>');
-        h.push(b.timeOff.map(function (t) {
+        h.push('<div class="m-stack">' + A.card(b.timeOff.map(function (t) {
           return A.kv(t.from + ' to ' + t.to, t.reason);
-        }).join(''));
+        }).join('')) + '</div>');
       }
 
       h.push('<div class="m-sec-head"><h2>Details</h2></div>');
-      h.push(A.kv('Email', b.email) + A.kv('Mobile', b.phone) + A.kv('Employee ID', b.empId) +
+      h.push('<div class="m-stack">' + A.card(A.kv('Email', b.email) + A.kv('Mobile', b.phone) + A.kv('Employee ID', b.empId) +
         A.kv('Primary position', b.primary) +
         A.kv('Also works as', b.secondary.length ? b.secondary.join(', ') : '') +
-        A.kv('Employment', b.employment) + A.kv('Joined', b.joined));
+        A.kv('Employment', b.employment) + A.kv('Joined', b.joined)) + '</div>');
 
       h.push('<div class="m-sec-head"><h2>Notifications</h2></div>');
-      h.push(A.kv('SMS', b.phone ? (b.sms ? 'On · ' + b.phone : 'Opted out') : 'No mobile number on file') +
+      h.push('<div class="m-stack">' + A.card(A.kv('SMS', b.phone ? (b.sms ? 'On · ' + b.phone : 'Opted out') : 'No mobile number on file') +
         A.kv('Email', 'On · ' + b.email) +
-        A.kv('Push', b.push ? 'On' : 'Not using the app'));
+        A.kv('Push', b.push ? 'On' : 'Not using the app')) + '</div>');
 
       h.push('<div style="padding:var(--space-5) var(--space-4);">' +
         (b.account === 'deactivated'
@@ -190,12 +196,12 @@
     }
 
     function tile(v, l) {
-      return '<div class="m-kpi"><span class="m-kpi-val" style="font-size:var(--fs-5);">' + esc(v) + '</span>' +
+      return '<div class="m-kpi"><span class="m-kpi-val" style="font-size:var(--m-fs-title);">' + esc(v) + '</span>' +
         '<span class="m-kpi-label">' + esc(l) + '</span></div>';
     }
-    function note(t) { return '<div style="padding:0 var(--space-4) var(--space-2);font-size:var(--fs-2);color:var(--fg-low);">' + esc(t) + '</div>'; }
+    function note(t) { return '<div style="padding:0 var(--m-inset) var(--space-2);font-size:var(--m-fs-body);color:var(--fg-low);">' + esc(t) + '</div>'; }
     function more(key, label) {
-      return '<div style="padding:var(--space-2) var(--space-4);"><button class="m-btn m-btn-text state-layer" data-more="' + key + '" style="width:100%;">' + esc(label) + '</button></div>';
+      return '<div style="padding:var(--space-2) var(--m-inset);"><button class="m-btn m-btn-text state-layer" data-more="' + key + '" style="width:100%;">' + esc(label) + '</button></div>';
     }
 
     A.fullscreen({
@@ -256,7 +262,7 @@
     var listHtml = affected.length
       ? '<div style="margin-top:var(--space-3);">' + affected.map(function (s) {
           var day = S.DAYS[s.day];
-          return '<div style="display:flex;gap:var(--space-2);font-size:var(--fs-1);padding:4px 0;">' +
+          return '<div style="display:flex;gap:var(--space-2);font-size:var(--m-fs-meta);padding:4px 0;">' +
             '<span style="color:var(--danger-text);">&bull;</span><span>' +
             esc(day.short + ', ' + day.label + ' · ' + s.start + ' to ' + s.end + ' · ' + s.position) + '</span></div>';
         }).join('') + '</div>' +
@@ -322,9 +328,9 @@
 
     function rowsHtml() {
       return draft.map(function (a, i) {
-        return '<div style="padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--border-subtle);">' +
+        return '<div class="m-card" style="padding:var(--space-4) var(--m-card-pad);">' +
           '<label class="m-switch" style="gap:var(--space-3);justify-content:space-between;width:100%;">' +
-            '<span style="flex:1;font-size:var(--fs-3);font-weight:var(--weight-medium);">' + S.DAYS[i].dow + '</span>' +
+            '<span style="flex:1;font-size:var(--m-fs-body);font-weight:var(--weight-medium);">' + S.DAYS[i].dow + '</span>' +
             '<input type="checkbox" data-day="' + i + '"' + (a.on ? ' checked' : '') + ' /></label>' +
           (a.on
             ? '<div style="display:flex;gap:var(--space-2);margin-top:var(--space-2);">' +
@@ -342,7 +348,7 @@
       title: 'Availability', flush: true,
       body: '<div class="m-alert is-info" style="margin:var(--space-4);">' + icon('circle', 18) +
         '<span>Availability affects who shows as available when you assign a shift. It does not block an override.</span></div>' +
-        '<div id="availRows">' + rowsHtml() + '</div>',
+        '<div class="m-stack" id="availRows">' + rowsHtml() + '</div>',
       actions: '<button class="m-btn m-btn-outlined state-layer" data-close style="flex:1;">Cancel</button>' +
                '<button class="m-btn m-btn-filled state-layer" data-save style="flex:1;">Save</button>',
       wire: function (node) {

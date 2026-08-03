@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./mobile.css?v=15" />
+  <link rel="stylesheet" href="./mobile.css?v=25" />
 </head>
 <body>
 <div class="m-app">
@@ -27,12 +27,14 @@
   <!-- ============================ HOME ============================ -->
   <section class="m-view" id="v-home">
     <header class="m-appbar">
-      <button class="m-icon-btn state-layer" data-sheet="location" aria-label="Change location">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+      <button class="m-appbar-scope state-layer" data-sheet="location" aria-label="Change location">
+        <i data-lucide="map-pin" style="width:20px;height:20px;display:inline-flex;flex:none;"></i>
+        <span class="m-scope-name" id="homeLocation">Skypoint Main Campus</span>
+        <i data-lucide="chevron-down" style="width:16px;height:16px;display:inline-flex;flex:none;opacity:.6;"></i>
       </button>
-      <span class="m-appbar-title" id="homeLocation">Skypoint Main Campus</span>
+      <span style="flex:1;"></span>
       <button class="m-icon-btn state-layer" data-sheet="notifications" aria-label="Notifications">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+        <i data-lucide="bell" style="width:24px;height:24px;display:inline-flex;flex:none;"></i>
       </button>
       <button class="m-icon-btn state-layer" data-goto="more" aria-label="Your account">
         <span class="m-avatar is-sm av-c5">SA</span>
@@ -47,10 +49,10 @@
     <header class="m-appbar">
       <span class="m-appbar-title">Schedule</span>
       <button class="m-icon-btn state-layer" id="schedSearchBtn" aria-label="Search shifts">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        <i data-lucide="search" style="width:24px;height:24px;display:inline-flex;flex:none;"></i>
       </button>
       <button class="m-icon-btn state-layer" data-sheet="schedFilter" aria-label="Filter shifts">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg>
+        <i data-lucide="list-filter" style="width:24px;height:24px;display:inline-flex;flex:none;"></i>
         <span class="m-badge is-info" id="schedFilterCount" hidden style="position:absolute;top:2px;right:2px;min-width:16px;padding:0 4px;height:16px;font-size:10px;">0</span>
       </button>
     </header>
@@ -60,14 +62,14 @@
          the range behind a gesture with no affordance. -->
     <div style="display:flex;align-items:center;gap:var(--space-1);padding:var(--space-2) var(--space-2);border-bottom:1px solid var(--border-subtle);background:var(--color-panel-solid);">
       <button class="m-icon-btn state-layer" id="weekPrev" aria-label="Previous week">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <i data-lucide="chevron-left" style="width:22px;height:22px;display:inline-flex;flex:none;"></i>
       </button>
       <button class="m-btn m-btn-text state-layer" id="rangeBtn" style="flex:1;font-weight:var(--weight-medium);">
         <span id="rangeLabel">Jul 26 &ndash; Aug 1</span>
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px;"><path d="m6 9 6 6 6-6"/></svg>
+        <i data-lucide="chevron-down" style="width:18px;height:18px;display:inline-flex;flex:none;margin-left:6px;"></i>
       </button>
       <button class="m-icon-btn state-layer" id="weekNext" aria-label="Next week">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        <i data-lucide="chevron-right" style="width:22px;height:22px;display:inline-flex;flex:none;"></i>
       </button>
     </div>
 
@@ -82,7 +84,7 @@
     <main class="m-body is-flush has-fab" id="schedBody"></main>
 
     <button class="m-fab is-extended state-layer" id="fabShift">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      <i data-lucide="plus" style="width:22px;height:22px;display:inline-flex;flex:none;"></i>
       Create shift
     </button>
   </section>
@@ -92,13 +94,13 @@
     <header class="m-appbar">
       <span class="m-appbar-title">BFMs</span>
       <button class="m-icon-btn state-layer" data-sheet="bfmSort" aria-label="Sort">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h10"/><path d="M11 8h7"/><path d="M11 12h4"/></svg>
+        <i data-lucide="arrow-down-narrow-wide" style="width:24px;height:24px;display:inline-flex;flex:none;"></i>
       </button>
     </header>
 
     <div class="m-section" style="padding-bottom:var(--space-2);">
       <div class="m-search">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--fg-subtle)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        <i data-lucide="search" style="width:20px;height:20px;display:inline-flex;flex:none;color:var(--fg-subtle);"></i>
         <input id="bfmSearch" placeholder="Search name, position or ID" autocomplete="off" />
       </div>
     </div>
@@ -113,7 +115,7 @@
     <main class="m-body is-flush has-fab" id="bfmBody"></main>
 
     <button class="m-fab state-layer" id="fabBfm" aria-label="Add BFM">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      <i data-lucide="plus" style="width:22px;height:22px;display:inline-flex;flex:none;"></i>
     </button>
   </section>
 
@@ -133,7 +135,7 @@
     <main class="m-body is-flush has-fab" id="msgBody"></main>
 
     <button class="m-fab is-extended state-layer" id="fabCompose">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>
+      <i data-lucide="pencil" style="width:22px;height:22px;display:inline-flex;flex:none;"></i>
       Compose
     </button>
   </section>
@@ -196,12 +198,18 @@
 <div id="overlayHost"></div>
 <div class="m-snackbar-host" id="snackHost"></div>
 
+<!-- Lucide, pinned. Icons are emitted as <i data-lucide="name"> and swapped
+     for real SVG by the library, so nothing here is hand-traced path data.
+     The five FILLED tab-bar icons above are the exception and are drawn by
+     hand, because Lucide ships an outline set only. -->
+<script src="https://unpkg.com/lucide@0.544.0/dist/umd/lucide.min.js"></script>
+
 <!-- Order matters: data, then the core (which creates APP and renders Home),
      then each screen module, which registers itself against APP. -->
-<script src="./mobile-data.js?v=15"></script>
-<script src="./mobile-app.js?v=15"></script>
-<script src="./mobile-schedule.js?v=15"></script>
-<script src="./mobile-people.js?v=15"></script>
-<script src="./mobile-comms.js?v=15"></script>
+<script src="./mobile-data.js?v=25"></script>
+<script src="./mobile-app.js?v=25"></script>
+<script src="./mobile-schedule.js?v=25"></script>
+<script src="./mobile-people.js?v=25"></script>
+<script src="./mobile-comms.js?v=25"></script>
 </body>
 </html>

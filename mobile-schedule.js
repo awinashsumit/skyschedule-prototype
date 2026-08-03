@@ -83,7 +83,9 @@
           '<span class="m-day-name">' + DOW[t.getDay()] + (isToday ? ' &middot; Today' : '') + '</span>' +
           '<span class="m-day-count">' + (list.length ? list.length + (list.length === 1 ? ' shift' : ' shifts') : 'No shifts') + '</span>' +
         '</div>' +
-        (list.length ? list.map(A.shiftRow).join('') : '') +
+        /* A day is one card. Shifts divide inside it; days separate by space. */
+        (list.length ? '<div class="m-stack"><div class="m-card is-rows">' +
+          list.map(A.shiftRow).join('') + '</div></div>' : '') +
         '</div>');
     }
 
@@ -134,28 +136,30 @@
       title: 'Shift #' + s.id, back: true, onBack: function () {}, flush: true,
       trail: A.badge(s.status),
       body:
-        '<div style="padding:var(--space-5) var(--space-4) var(--space-4);">' +
-          '<div style="font-size:var(--fs-7);line-height:var(--lh-7);font-weight:var(--weight-bold);">' + esc(s.start + ' to ' + s.end) + '</div>' +
-          '<div style="font-size:var(--fs-3);color:var(--fg-low);margin-top:2px;">' + esc(day.dow + ', ' + day.label) + ' &middot; ' + hrs + 'h</div>' +
+        '<div style="padding:var(--space-6) var(--m-inset) var(--space-5);">' +
+          '<div style="font-size:var(--m-fs-hero);line-height:var(--m-lh-hero);font-weight:var(--weight-bold);">' + esc(s.start + ' to ' + s.end) + '</div>' +
+          '<div style="font-size:var(--m-fs-body);color:var(--fg-low);margin-top:2px;">' + esc(day.dow + ', ' + day.label) + ' &middot; ' + hrs + 'h</div>' +
         '</div>' +
         (b
-          ? '<button class="m-list-item state-layer" data-profile="' + b.id + '" style="width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:1px solid var(--border-subtle);">' +
+          ? '<div class="m-stack"><button class="m-card m-list-item state-layer" data-profile="' + b.id + '" style="width:100%;text-align:left;padding:var(--space-3) var(--m-card-pad);">' +
             '<span class="m-li-lead">' + A.avatar(b) + '</span>' +
             '<span class="m-li-text"><span class="m-li-title">' + esc(S.fullName(b)) + '</span>' +
             '<span class="m-li-sub">' + esc(b.primary + ' · ' + b.employment) + '</span></span>' +
-            '<span class="m-li-trail">' + icon('chevron', 20) + '</span></button>'
-          : '<div class="m-alert is-' + (s.status === 'unfulfilled' ? 'danger' : 'warning') + '" style="margin:0 var(--space-4) var(--space-3);">' +
+            '<span class="m-li-trail">' + icon('chevron', 20) + '</span></button></div>'
+          : '<div class="m-alert is-' + (s.status === 'unfulfilled' ? 'danger' : 'warning') + '" style="margin:0 var(--m-inset) var(--space-3);">' +
             icon('warn', 18) + '<span>' + (s.status === 'unfulfilled'
               ? 'This shift was never filled and the date has passed.'
               : 'Nobody is assigned yet.') + '</span></div>') +
-        A.kv('Position', s.position) + A.kv('Location', s.location) +
-        A.kv('Status', (A.badge(s.status).replace(/<[^>]+>/g, '')).trim()) +
-        A.kv('Paid hours', hrs + 'h') +
+        '<div class="m-stack">' + A.card(
+          A.kv('Position', s.position) + A.kv('Location', s.location) +
+          A.kv('Status', (A.badge(s.status).replace(/<[^>]+>/g, '')).trim()) +
+          A.kv('Paid hours', hrs + 'h')) + '</div>' +
         '<div class="m-sec-head"><h2>Actions</h2></div>' +
-        actionRow('message', 'Message the assignee', b ? '' : 'disabled') +
-        actionRow('swap', 'Reassign to someone else') +
-        actionRow('edit', 'Edit times and position') +
-        actionRow('trash', 'Delete shift', '', true),
+        '<div class="m-stack">' + A.card(
+          actionRow('message', 'Message the assignee', b ? '' : 'disabled') +
+          actionRow('swap', 'Reassign to someone else') +
+          actionRow('edit', 'Edit times and position') +
+          actionRow('trash', 'Delete shift', '', true)) + '</div>',
       actions: (b
         ? '<button class="m-btn m-btn-outlined state-layer" data-unassign style="flex:1;">Unassign</button>' +
           (s.status === 'draft' ? '<button class="m-btn m-btn-filled state-layer" data-publish style="flex:1;">Publish</button>' : '')
@@ -196,9 +200,10 @@
 
   function actionRow(ic, label, disabled, danger) {
     return '<button class="m-list-item state-layer" data-act="' + ic + '"' + (disabled ? ' disabled' : '') +
-      ' style="width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0;' +
+      ' style="width:100%;text-align:left;background:none;border:0;' +
       (danger ? 'color:var(--danger-text);' : '') + (disabled ? 'opacity:.45;' : '') + '">' +
-      '<span class="m-li-lead"' + (danger ? ' style="color:var(--danger-text);"' : '') + '>' + icon(ic, 22) + '</span>' +
+      '<span class="m-li-lead" style="width:var(--m-lead);height:var(--m-lead);border-radius:var(--radius-full);display:grid;place-content:center;background:var(--' +
+      (danger ? 'danger-bg' : 'gray-3') + ');' + (danger ? 'color:var(--danger-text);' : '') + '">' + icon(ic, 20) + '</span>' +
       '<span class="m-li-text"><span class="m-li-title"' + (danger ? ' style="color:var(--danger-text);"' : '') + '>' + esc(label) + '</span></span>' +
       '</button>';
   }
@@ -239,7 +244,7 @@
 
     if (!cands.length) {
       A.sheet({ title: 'No one is qualified',
-        body: '<p style="font-size:var(--fs-2);color:var(--fg-low);">Nobody active holds ' + esc(s.position) +
+        body: '<p style="font-size:var(--m-fs-body);color:var(--fg-low);">Nobody active holds ' + esc(s.position) +
           ' as a primary or secondary position. Add it to someone in BFMs, then assign.</p>',
         actions: '<button class="m-btn m-btn-outlined state-layer" data-close>Close</button>' +
                  '<button class="m-btn m-btn-filled state-layer" data-bfms>Go to BFMs</button>',
@@ -311,24 +316,24 @@
         (dur <= 0
           ? '<div class="m-alert is-danger" style="margin:var(--space-3) var(--space-4) 0;">' + icon('warn', 18) +
             '<span>The end time must be after the start time.</span></div>'
-          : '<div style="padding:var(--space-2) var(--space-4);font-size:var(--fs-1);color:var(--fg-subtle);">' + dur + ' paid hours</div>') +
+          : '<div style="padding:var(--space-2) var(--m-inset);font-size:var(--m-fs-meta);color:var(--fg-subtle);">' + dur + ' paid hours</div>') +
         pickRow('location', 'Location', draft.location) +
         pickRow('assign', 'Assign to', who) +
         (editing ? '' :
-          '<div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--border-subtle);">' +
-            '<span style="flex:1;font-size:var(--fs-2);">How many</span>' +
+          '<div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--m-inset);border-bottom:1px solid var(--border-subtle);">' +
+            '<span style="flex:1;font-size:var(--m-fs-body);">How many</span>' +
             '<div class="m-stepper"><button data-qty="-1" class="state-layer" aria-label="Fewer">' + icon('minusOnly', 20) +
             '</button><span class="m-stepper-value" id="qtyVal">' + draft.qty + '</span>' +
             '<button data-qty="1" class="state-layer" aria-label="More">' + icon('plus', 20, 2) + '</button></div></div>') +
-        '<label class="m-switch" style="gap:var(--space-3);justify-content:space-between;width:100%;padding:var(--space-4);">' +
-          '<span style="flex:1;font-size:var(--fs-2);">Publish immediately<span style="display:block;font-size:var(--fs-1);color:var(--fg-low);">Off saves it as a draft nobody sees yet</span></span>' +
+        '<label class="m-switch" style="gap:var(--space-3);justify-content:space-between;width:100%;padding:var(--m-inset);">' +
+          '<span style="flex:1;font-size:var(--m-fs-body);">Publish immediately<span style="display:block;font-size:var(--m-fs-meta);color:var(--fg-low);">Off saves it as a draft nobody sees yet</span></span>' +
           '<input type="checkbox" id="pubToggle"' + (draft.publish ? ' checked' : '') + ' /></label>';
     }
 
     function pickRow(key, label, val) {
-      return '<button class="m-list-item state-layer" data-pick="' + key + '" style="width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0;">' +
-        '<span class="m-li-text"><span class="m-li-sub">' + esc(label) + '</span>' +
-        '<span class="m-li-title" style="font-size:var(--fs-3);">' + esc(val) + '</span></span>' +
+      return '<button class="m-list-item state-layer" data-pick="' + key + '" style="width:100%;text-align:left;background:none;border:0;">' +
+        '<span class="m-li-text"><span class="m-li-sub" style="text-transform:uppercase;letter-spacing:.05em;font-weight:var(--weight-semibold);">' + esc(label) + '</span>' +
+        '<span class="m-li-title" style="font-size:var(--m-fs-body);">' + esc(val) + '</span></span>' +
         '<span class="m-li-trail">' + icon('chevron', 20) + '</span></button>';
     }
 
@@ -443,7 +448,7 @@
       body: '<div class="m-month">' +
         ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(function (x) { return '<span class="m-month-dow">' + x + '</span>'; }).join('') +
         cells.join('') + '</div>' +
-        '<div style="display:flex;gap:var(--space-4);margin-top:var(--space-4);font-size:var(--fs-1);color:var(--fg-low);">' +
+        '<div style="display:flex;gap:var(--space-4);margin-top:var(--space-4);font-size:var(--m-fs-meta);color:var(--fg-low);">' +
           '<span style="display:inline-flex;align-items:center;gap:6px;"><span class="m-month-dot" style="display:inline-block;"></span> Has shifts</span>' +
           '<span style="display:inline-flex;align-items:center;gap:6px;"><span class="m-month-dot is-danger" style="display:inline-block;"></span> Needs attention</span>' +
         '</div>',
@@ -462,7 +467,7 @@
     A.sheet({
       title: 'Filter shifts',
       body:
-        '<div style="font-size:var(--fs-1);color:var(--fg-subtle);text-transform:uppercase;letter-spacing:.05em;margin-bottom:var(--space-2);">Status</div>' +
+        '<div style="font-size:var(--m-fs-meta);color:var(--fg-subtle);text-transform:uppercase;letter-spacing:.05em;margin-bottom:var(--space-2);">Status</div>' +
         chipSet('status', ['all', 'confirmed', 'draft', 'open', 'unfulfilled'],
           ['Any status', 'Confirmed', 'Draft', 'Open', 'Unfulfilled']) +
         '<label class="m-field" style="margin-top:var(--space-4);"><span class="m-field-label">Position</span>' +

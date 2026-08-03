@@ -37,11 +37,11 @@
   });
 
   function templatesHtml() {
-    return '<div style="padding:var(--space-2) var(--space-4) var(--space-3);font-size:var(--fs-2);color:var(--fg-low);">' +
-      'Start from a template so you are not writing an SMS and an email from scratch on a phone.</div>' +
-      S.TEMPLATES.map(function (t) {
+    return '<div style="padding:var(--space-2) var(--m-inset) var(--space-4);font-size:var(--m-fs-body);line-height:var(--m-lh-body);color:var(--fg-low);">' +
+      'Start from a template rather than writing an SMS and an email from scratch.</div>' +
+      '<div class="m-stack">' + S.TEMPLATES.map(function (t) {
         var sms = S.smsInfo(t.sms);
-        return '<div class="m-list-item state-layer" data-tpl="' + t.id + '">' +
+        return '<div class="m-card m-list-item state-layer" data-tpl="' + t.id + '" style="align-items:flex-start;padding:var(--m-card-pad);">' +
           '<span class="m-li-text">' +
             '<span class="m-li-title">' + esc(t.name) + '</span>' +
             '<span class="m-li-sub">' + (t.shared ? 'Shared · ' : 'Only you · ') +
@@ -50,10 +50,10 @@
               sms.parts + ' SMS part' + (sms.parts === 1 ? '' : 's') + ' · ' + sms.chars + ' chars</span>' +
           '</span>' +
           '<span class="m-li-trail">' +
-            '<button class="m-btn m-btn-tonal state-layer" data-use="' + t.id + '" style="padding:0 var(--space-4);">Use</button>' +
+            '<button class="m-btn m-btn-tonal state-layer" data-use="' + t.id + '" style="padding:0 var(--m-inset);">Use</button>' +
           '</span></div>';
-      }).join('') +
-      '<div style="padding:var(--space-4);"><button class="m-btn m-btn-outlined state-layer" id="newTpl" style="width:100%;">' +
+      }).join('') + '</div>' +
+      '<div style="padding:var(--space-5) var(--m-inset);"><button class="m-btn m-btn-outlined state-layer" id="newTpl" style="width:100%;">' +
       icon('plus', 18, 2) + ' New template</button></div>';
   }
 
@@ -67,7 +67,8 @@
     groups.forEach(function (g) {
       var list = S.MESSAGES.filter(function (m) { return m.status === g.key; });
       if (!list.length) return;
-      h.push('<div class="m-group"><div class="m-list-header m-sticky">' + g.label + '</div>');
+      h.push('<div class="m-group"><div class="m-list-header m-sticky">' + g.label + '</div>' +
+        '<div class="m-stack"><div class="m-card is-rows">');
       h.push(list.map(function (m) {
         var delivered = m.channels.sms.delivered + m.channels.email.delivered + m.channels.push.delivered;
         var failed = m.channels.sms.failed + m.channels.email.failed + m.channels.push.failed;
@@ -84,7 +85,7 @@
               : m.status === 'scheduled' ? '<span class="m-badge is-info">Scheduled</span>'
               : '<span class="m-badge is-neutral">Draft</span>') +
             icon('chevron', 20) + '</span></div>';
-      }).join('') + '</div>');
+      }).join('') + '</div></div></div>');
     });
     return h.join('');
   }
@@ -99,20 +100,21 @@
       title: t.name, back: true, onBack: function () {}, flush: true,
       body:
         '<div class="m-sec-head"><h2>SMS</h2><span class="m-sec-sub">' + sms.parts + ' part' + (sms.parts === 1 ? '' : 's') + ' · ' + sms.encoding + '</span></div>' +
-        '<div style="padding:0 var(--space-4);"><div class="m-review-msg">' + esc(t.sms) + '</div></div>' +
-        '<div style="padding:var(--space-2) var(--space-4);font-size:var(--fs-1);color:var(--fg-subtle);">As ' + esc(sample.first) + ' receives it:</div>' +
-        '<div style="padding:0 var(--space-4);"><div class="m-review-msg" style="background:var(--accent-3);">' +
+        '<div style="padding:0 var(--m-inset);"><div class="m-review-msg">' + esc(t.sms) + '</div></div>' +
+        '<div style="padding:var(--space-2) var(--m-inset);font-size:var(--m-fs-meta);color:var(--fg-subtle);">As ' + esc(sample.first) + ' receives it:</div>' +
+        '<div style="padding:0 var(--m-inset);"><div class="m-review-msg" style="background:var(--accent-3);">' +
           esc(S.renderTokens(t.sms, sample)) + '</div></div>' +
         '<div class="m-sec-head"><h2>Email</h2></div>' +
         A.kv('Subject', t.emailSubject) +
-        '<div style="padding:var(--space-3) var(--space-4);"><div class="m-review-msg">' + esc(t.emailBody) + '</div></div>' +
+        '<div style="padding:var(--space-3) var(--m-inset);"><div class="m-review-msg">' + esc(t.emailBody) + '</div></div>' +
         '<div class="m-sec-head"><h2>Merge fields</h2></div>' +
-        '<div style="padding:0 var(--space-4) var(--space-4);display:flex;flex-wrap:wrap;gap:var(--space-2);">' +
+        '<div style="padding:0 var(--m-inset) var(--space-5);display:flex;flex-wrap:wrap;gap:var(--space-2);">' +
           tokensIn(t.sms + ' ' + t.emailSubject + ' ' + t.emailBody).map(function (k) {
             return '<span class="m-badge is-neutral">{' + esc(k) + '}</span>';
           }).join('') + '</div>' +
-        A.kv('Visibility', t.shared ? 'Shared with the team' : 'Only you') +
-        A.kv('Used', t.usedCount + ' times, last on ' + t.lastUsed),
+        '<div class="m-stack" style="padding-bottom:var(--space-5);">' + A.card(
+          A.kv('Visibility', t.shared ? 'Shared with the team' : 'Only you') +
+          A.kv('Used', t.usedCount + ' times, last on ' + t.lastUsed)) + '</div>',
       actions: '<button class="m-btn m-btn-outlined state-layer" data-edit style="flex:1;">Edit</button>' +
                '<button class="m-btn m-btn-filled state-layer" data-use style="flex:1;">Use this</button>',
       wire: function (n) {
@@ -146,13 +148,13 @@
       trail: m.status === 'sent' ? '' : '<span class="m-badge is-' + (m.status === 'scheduled' ? 'info' : 'neutral') + '">' +
         (m.status === 'scheduled' ? 'Scheduled' : 'Draft') + '</span>',
       body:
-        '<div style="padding:var(--space-4);"><div class="m-review-msg">' + esc(m.rendered) + '</div></div>' +
+        '<div style="padding:var(--m-inset);"><div class="m-review-msg">' + esc(m.rendered) + '</div></div>' +
         A.kv(m.status === 'sent' ? 'Sent' : m.status === 'scheduled' ? 'Goes out' : 'Last edited', m.sentAt) +
         A.kv('By', m.sender) + A.kv('Audience', m.audience) +
         A.kv('Template', m.templateName || 'Written from scratch') +
         A.kv('Recipients', String(m.recipients)) +
         '<div class="m-sec-head"><h2>Delivery</h2></div>' +
-        chRow('SMS', ch.sms) + chRow('Email', ch.email) + chRow('Push', ch.push) +
+        '<div class="m-stack">' + A.card(chRow('SMS', ch.sms) + chRow('Email', ch.email) + chRow('Push', ch.push)) + '</div>' +
         (ch.sms.failed
           ? '<div class="m-alert is-warning" style="margin-top:var(--space-3);">' + icon('warn', 18) +
             '<span>' + ch.sms.failed + ' SMS failed. The number was unreachable at the carrier. Email still went through.</span></div>'
@@ -292,20 +294,20 @@
       var done = c.filter(function (x) { return x.ok; }).length;
       var pct = Math.round((done / c.length) * 100);
       return '<div style="padding:var(--space-4) var(--space-4) var(--space-2);">' +
-          '<div style="display:flex;justify-content:space-between;font-size:var(--fs-2);font-weight:var(--weight-medium);margin-bottom:var(--space-2);">' +
+          '<div style="display:flex;justify-content:space-between;font-size:var(--m-fs-body);font-weight:var(--weight-medium);margin-bottom:var(--space-2);">' +
             '<span>' + done + ' of ' + c.length + ' ready</span>' +
             (m.templateName ? '<span style="color:var(--fg-low);font-weight:var(--weight-regular);">From ' + esc(m.templateName) + '</span>' : '') +
           '</div>' +
           '<div class="m-progress"><div class="m-progress-fill" style="width:' + pct + '%;"></div></div>' +
         '</div>' +
-        c.map(function (x) {
+        '<div class="m-stack"><div class="m-card is-rows">' + c.map(function (x) {
           return '<button class="m-ready-row state-layer" data-open="' + x.key + '">' +
             '<span class="m-ready-icon" style="color:var(--' + (x.ok ? 'success' : 'danger') + '-solid);">' +
               icon(x.ok ? 'checkCircle' : 'warn', 24) + '</span>' +
             '<span class="m-ready-text"><span class="m-ready-label">' + esc(x.label) + '</span>' +
             '<span class="m-ready-sub' + (x.ok ? '' : ' is-error') + '">' + esc(x.sub) + '</span></span>' +
             icon('chevron', 20) + '</button>';
-        }).join('') +
+        }).join('') + '</div></div>' +
         (m.audience ? reachHtml(S.reachOf(m.audience.people)) : '');
     }
 
@@ -318,12 +320,12 @@
       if (m.channels.push) rows.push(['Push ' + r.push + ' of ' + r.total, r.pushWhy.join(', '), r.push === r.total]);
       if (!rows.length) return '';
       return '<div class="m-sec-head"><h2>Who this reaches</h2></div>' +
-        '<div style="padding:0 var(--space-4) var(--space-4);"><div class="m-reach">' +
+        '<div class="m-stack" style="padding-bottom:var(--space-5);"><div class="m-card"><div class="m-reach">' +
         rows.map(function (x) {
           return '<div class="m-reach-row is-' + (x[2] ? 'ok' : 'blocked') + '">' +
             '<span class="m-reach-label">' + esc(x[0]) + '</span>' +
             (x[1] ? '<span class="m-reach-why">' + esc(x[1]) + '</span>' : '') + '</div>';
-        }).join('') + '</div></div>';
+        }).join('') + '</div></div></div>';
     }
 
     var node = A.fullscreen({
@@ -419,11 +421,11 @@
                 : k === 'email' ? r.email + ' of ' + r.total + ' reachable'
                 : r.push + ' of ' + r.total + ' reachable' + (r.pushWhy.length ? ' · ' + r.pushWhy.join(', ') : '');
               return '<label class="m-switch" style="gap:var(--space-3);justify-content:space-between;width:100%;padding:var(--space-3) 0;border-bottom:1px solid var(--border-subtle);">' +
-                '<span style="flex:1;"><span style="display:block;font-size:var(--fs-2);font-weight:var(--weight-medium);">' + label + '</span>' +
-                '<span style="display:block;font-size:var(--fs-1);color:var(--fg-low);">' + esc(sub) + '</span></span>' +
+                '<span style="flex:1;"><span style="display:block;font-size:var(--m-fs-body);font-weight:var(--weight-medium);">' + label + '</span>' +
+                '<span style="display:block;font-size:var(--m-fs-meta);color:var(--fg-low);">' + esc(sub) + '</span></span>' +
                 '<input type="checkbox" data-ch="' + k + '"' + (m.channels[k] ? ' checked' : '') + ' /></label>';
             }).join('') +
-            (m.channels.sms && m.sms ? '<div style="margin-top:var(--space-3);font-size:var(--fs-1);color:var(--fg-low);">' +
+            (m.channels.sms && m.sms ? '<div style="margin-top:var(--space-3);font-size:var(--m-fs-meta);color:var(--fg-low);">' +
               'SMS is billed per part. At ' + S.smsInfo(m.sms).parts + ' part' + (S.smsInfo(m.sms).parts === 1 ? '' : 's') +
               ' this send costs ' + (r ? r.sms * S.smsInfo(m.sms).parts : 0) + ' segments.</div>' : ''),
             actions: '<button class="m-btn m-btn-filled state-layer" data-close>Done</button>',
@@ -491,7 +493,7 @@
                 '<textarea class="m-textarea" id="emBody" rows="8">' + esc(m.emailBody) + '</textarea></label>' +
               '<div class="m-sec-head" style="padding-left:0;padding-right:0;"><h2>Preview</h2>' +
                 (sample ? '<span class="m-sec-sub">as ' + esc(sample.first) + '</span>' : '') + '</div>' +
-              '<div style="font-size:var(--fs-2);font-weight:var(--weight-bold);margin-bottom:var(--space-2);" id="emSubPrev"></div>' +
+              '<div style="font-size:var(--m-fs-body);font-weight:var(--weight-bold);margin-bottom:var(--space-2);" id="emSubPrev"></div>' +
               '<div class="m-review-msg" id="emBodyPrev"></div>',
             actions: '<button class="m-btn m-btn-filled state-layer" data-save style="flex:1;">Done</button>',
             wire: function (fn) {
@@ -566,29 +568,29 @@
       title: 'Review', back: true, onBack: back, flush: true,
       body:
         '<div class="m-review-block"><div class="m-review-k">Going to</div>' +
-          '<div style="font-size:var(--fs-3);font-weight:var(--weight-medium);">' + esc(m.audience.label) + '</div>' +
-          '<div style="font-size:var(--fs-2);color:var(--fg-low);">' + m.audience.people.length +
+          '<div style="font-size:var(--m-fs-body);font-weight:var(--weight-medium);">' + esc(m.audience.label) + '</div>' +
+          '<div style="font-size:var(--m-fs-body);color:var(--fg-low);">' + m.audience.people.length +
           (m.audience.people.length === 1 ? ' person' : ' people') + ' · ' + esc(m.whenLabel) + '</div></div>' +
 
         (m.channels.sms
           ? '<div class="m-review-block"><div class="m-review-k">SMS as ' + esc(sample.first) + ' receives it</div>' +
             '<div class="m-review-msg">' + esc(S.renderTokens(m.sms, sample)) + '</div>' +
-            '<div style="margin-top:var(--space-2);font-size:var(--fs-1);color:var(--fg-low);">' +
+            '<div style="margin-top:var(--space-2);font-size:var(--m-fs-meta);color:var(--fg-low);">' +
             info.chars + ' chars · ' + info.parts + ' part' + (info.parts === 1 ? '' : 's') + ' · ' + info.encoding +
             ' · ' + segs + ' segments billed</div></div>' : '') +
 
         (m.channels.email
           ? '<div class="m-review-block"><div class="m-review-k">Email as ' + esc(sample.first) + ' receives it</div>' +
-            '<div style="font-weight:var(--weight-bold);font-size:var(--fs-2);margin-bottom:var(--space-2);">' +
+            '<div style="font-weight:var(--weight-bold);font-size:var(--m-fs-body);margin-bottom:var(--space-2);">' +
             esc(S.renderTokens(m.subject, sample)) + '</div>' +
             '<div class="m-review-msg">' + esc(S.renderTokens(m.emailBody, sample)) + '</div></div>' : '') +
 
         '<div class="m-sec-head"><h2>Reach</h2></div>' +
-        '<div style="padding:0 var(--space-4) var(--space-3);"><div class="m-reach">' +
+        '<div class="m-stack" style="padding-bottom:var(--space-4);"><div class="m-card"><div class="m-reach">' +
           (m.channels.sms ? reachRow('SMS ' + r.sms + ' of ' + r.total, r.smsWhy.join(', '), r.sms === r.total) : '') +
           (m.channels.email ? reachRow('Email ' + r.email + ' of ' + r.total, '', true) : '') +
           (m.channels.push ? reachRow('Push ' + r.push + ' of ' + r.total, r.pushWhy.join(', '), r.push === r.total) : '') +
-        '</div></div>' +
+        '</div></div></div>' +
 
         (unreachable.length
           ? '<div class="m-alert is-danger">' + icon('warn', 18) + '<span>' + unreachable.length +

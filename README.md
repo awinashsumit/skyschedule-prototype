@@ -53,6 +53,69 @@ surface with its own app bar.
 | `mobile-comms.js` | Templates, message log, Compose checklist and the review gate. |
 | `mobile-components.html` | Component gallery: every component in every state. |
 
+### Design foundation
+
+**Colour, radii, spacing, shadows: Radix.** The gray, red, green, blue and
+orange ramps are the literal Radix 12-step scales; space is Radix 1–9
+(4·8·12·16·24·32·40·48·64); radii are the Radix "medium" factor; shadows are
+the Radix recipe (1px ring plus soft spread).
+
+Four steps of the amber ramp deviate, and only these four. Steps **9 and 10**
+are Skypoint amber rather than Radix Amber, which is the point of a brand
+accent. Step **3** is warmed slightly. Step **11** was set to the same
+`#ffb31c` as step 9 — a fill colour used as a text colour, giving 1.79:1 on
+white — and is overridden to `#9c5b00` (5.37:1) in `mobile.css`. `tokens.css`
+is left alone so the desktop build is unaffected.
+
+**Density is mobile-specific.** Radix geometry is tuned for dense desktop
+tables at 1440px: 8px radii, 12px padding, hairline dividers. At 390px that
+reads as a spreadsheet. The mobile layer uses a 20px gutter, 20px card radii,
+20px card padding, and separates cards with space rather than a 1px rule.
+Dividers appear only *inside* a card, where they mean "same group, next item".
+
+**Type is a modular scale, not the desktop ramp.** The Radix ramp is
+hand-tuned for desktop, and the first mobile build leant on its 12 and 14px
+steps for ~80% of all text, which is why the screens had no hierarchy. Mobile
+uses a 1.25 scale anchored at a 16px body, rounded so every line-height lands
+on the 4px baseline grid:
+
+| Token | Size / line | Used for |
+|---|---|---|
+| `--m-fs-meta` | 13 / 20 | captions, timestamps, counts |
+| `--m-fs-body` | 16 / 24 | default; also the iOS no-zoom floor for inputs |
+| `--m-fs-title` | 20 / 28 | card titles, section and app bar headings |
+| `--m-fs-head` | 24 / 32 | screen titles |
+| `--m-fs-hero` | 32 / 40 | the one big number on a screen |
+
+`--m-fs-micro` (11px) is the single documented exception, used only inside
+circular counters and small avatars where 13px will not fit.
+
+**Text starts on one of five edges, never anywhere else.**
+
+```
+20   the page gutter ................ anything on the canvas
+40   gutter + card padding .......... anything inside a card
+58   + status rail (4) + gap (14) ... a shift row
+86   + small avatar (32) + gap ...... a row led by a 32px avatar
+94   + avatar (40) + gap ............ a row led by a 40px avatar
+```
+
+Trailing content is right-aligned and does not share a left edge. The two-up
+KPI grid has its own second column. Anything landing elsewhere is a bug.
+
+**Icons are Lucide**, loaded from a pinned CDN build and rendered from
+`<i data-lucide="…">` placeholders — no hand-traced path data. The exception is
+the five *filled* tab-bar icons, which are hand-drawn because Lucide ships an
+outline set only; they live in `mobile.html` and are the only `<svg>` literals
+in the project.
+
+**Accessibility is measured, not assumed.** Every screen was audited in the
+browser: all text clears WCAG AA (4.5:1, or 3:1 at large sizes) and every
+interactive target clears 44px. Six of the eight avatar fills were darkened
+from the chart ramp until white initials passed. The one deliberate exception
+is the active tab's amber at 1.79:1, kept for brand fidelity at Sumit's
+direction.
+
 Two rules the mobile build keeps from desktop, because they are the product's
 actual safety net:
 

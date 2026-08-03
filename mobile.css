@@ -28,6 +28,51 @@
   --m-radius-fab: 16px;
   --m-radius-chip: var(--radius-full);
 
+  /* ---- Mobile density ------------------------------------------------
+     Radix geometry is tuned for dense desktop tables at 1440px: 8px radii,
+     12px padding, hairline dividers. Rendered at 390px that reads as a
+     spreadsheet, not an app. These are the mobile equivalents. Cards get
+     space between them instead of a 1px rule, and the radii roughly triple.
+
+     Text starts at one of a fixed set of edges, and no others:
+       20  --m-inset ................ anything sitting on the canvas
+       40  inset + card-pad ......... anything inside a card
+       58  + rail(4) + gap(14) ...... a shift row, after its status rail
+       86  + avatar-sm(32) + gap .... a row led by a small avatar
+       94  + avatar(40) + gap ....... a row led by a full avatar
+     Trailing content is right-aligned and does not share a left edge.
+     Anything that lands elsewhere is a mistake, not a variation. */
+  --m-inset: 20px;          /* the single page gutter */
+  --m-gap: 16px;            /* space between sibling cards */
+  --m-card-pad: 20px;       /* card interior */
+  --m-radius-card: 20px;    /* was 16px, and 8px on smaller surfaces */
+  --m-radius-inner: 14px;   /* inputs and controls sitting inside a card */
+  --m-lead: 40px;           /* avatar / leading icon column */
+  --m-lead-gap: 14px;
+
+  /* ---- Mobile type scale ---------------------------------------------
+     The Radix ramp (12/14/16/18/20/24/28/35/60) is a hand-tuned desktop
+     ramp, and the first build leant on 12 and 14 for roughly 80% of all
+     text - which is why the screens had no hierarchy. This is a modular
+     1.25 scale anchored at a 16px body, rounded so every line-height
+     lands on the 4px baseline grid.
+
+       13/20  meta      captions, timestamps, counts
+       16/24  body      the default; also the iOS no-zoom floor for inputs
+       20/28  title     card titles, section headings, app bar titles
+       24/32  head      screen titles
+       32/40  hero      the one big number on a screen                  */
+  --m-fs-meta: 13px;  --m-lh-meta: 20px;
+  --m-fs-body: 16px;  --m-lh-body: 24px;
+  --m-fs-title: 20px; --m-lh-title: 28px;
+  --m-fs-head: 24px;  --m-lh-head: 32px;
+  --m-fs-hero: 32px;  --m-lh-hero: 40px;
+  /* One documented exception. 13px will not fit inside an 18px counter
+     circle or a 32px avatar, and growing those to suit the ramp would make
+     a notification badge louder than the icon it sits on. Used ONLY inside
+     circular counters and small avatars - nowhere in running text. */
+  --m-fs-micro: 11px;
+
   /* Brand amber for the active tab. Points at the token rather than a raw
      hex so dark mode and any future brand change follow automatically.
      Note: 1.79:1 on white. Chosen for brand fidelity over contrast at
@@ -103,7 +148,7 @@
 html, body { height: 100%; }
 body {
   font-family: var(--font-base);
-  font-size: var(--fs-2);
+  font-size: var(--m-fs-body);
   line-height: var(--lh-2);
   color: var(--fg-high);
   background: var(--color-page);
@@ -146,7 +191,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    Assign button, a chevron - can never be tapped. FAB is 56px tall and
    already offset by space-4 from the tab bar. */
 .m-body.has-fab { padding-bottom: calc(var(--m-tabbar-h) + var(--m-safe-bottom) + 56px + var(--space-6)); }
-.m-section { padding: var(--space-4); }
+.m-section { padding: var(--m-inset); }
 
 /* ============================================================
    TOP APP BAR  (M3: small + large)
@@ -156,12 +201,23 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   display: flex; align-items: center; gap: var(--space-2);
   height: calc(var(--m-appbar-h) + var(--m-safe-top));
   padding: var(--m-safe-top) var(--space-2) 0;
+  gap: var(--space-1);
   background: var(--color-panel-solid);
   border-bottom: 1px solid var(--border-subtle);
 }
+/* Compact control that names the current scope without eating the bar. */
+.m-appbar-scope {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  min-height: var(--m-touch); max-width: 62%; padding: 0 var(--space-3) 0 var(--space-2);
+  border-radius: var(--radius-full); background: none; border: 0; cursor: pointer;
+  color: var(--fg-high); font-size: var(--m-fs-body); font-weight: var(--weight-semibold);
+}
+.m-appbar-scope .m-scope-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .m-appbar .m-appbar-title {
   flex: 1; min-width: 0;
-  font-size: var(--fs-4); font-weight: var(--weight-medium); color: var(--fg-high);
+  font-size: var(--m-fs-title); line-height: var(--m-lh-title);
+  font-weight: var(--weight-bold); color: var(--fg-high);
+  padding-left: var(--space-3);   /* 8px bar padding + 12 = the 20px inset */
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 /* Large variant: title drops onto its own line, M3's headline treatment.
@@ -171,7 +227,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   padding-bottom: var(--space-3);
 }
 .m-appbar.is-large .m-appbar-row { display: flex; align-items: center; gap: var(--space-2); min-height: var(--m-appbar-h); }
-.m-appbar.is-large .m-appbar-title { font-size: var(--fs-7); line-height: var(--lh-7); font-weight: var(--weight-bold); padding: 0 var(--space-2); }
+.m-appbar.is-large .m-appbar-title { font-size: var(--m-fs-hero); line-height: var(--m-lh-hero); font-weight: var(--weight-bold); padding: 0 var(--space-2); }
 .m-appbar.is-dark { background: #242424; border-bottom-color: rgba(255,255,255,.10); color: #fff; }
 .m-appbar.is-dark .m-appbar-title { color: #fff; }
 
@@ -198,7 +254,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   width: 56px; height: 30px;
   transition: color var(--m-dur-short) var(--m-ease);
 }
-.m-tab .m-tab-label { font-size: var(--fs-1); font-weight: var(--weight-medium); transition: color var(--m-dur-short) var(--m-ease); }
+.m-tab .m-tab-label { font-size: var(--m-fs-meta); font-weight: var(--weight-medium); transition: color var(--m-dur-short) var(--m-ease); }
 
 /* Active state: the icon swaps to its filled variant and both icon and
    label take the brand amber. No indicator pill. */
@@ -217,7 +273,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: var(--radius-full);
   background: var(--danger-solid); color: #fff;
-  font-size: 11px; font-weight: var(--weight-medium);
+  font-size: var(--m-fs-micro); font-weight: var(--weight-medium);
 }
 
 /* ============================================================
@@ -243,9 +299,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   padding: var(--space-3) 0 var(--space-2);
 }
 .m-sheet-handle span { width: 32px; height: 4px; border-radius: var(--radius-full); background: var(--gray-7); }
-.m-sheet-title { flex: none; padding: 0 var(--space-4) var(--space-2); font-size: var(--fs-5); font-weight: var(--weight-bold); }
-.m-sheet-body { flex: 1; overflow-y: auto; padding: var(--space-2) var(--space-4) var(--space-4); }
-.m-sheet-actions { flex: none; display: flex; gap: var(--space-2); padding: var(--space-3) var(--space-4) var(--space-4); border-top: 1px solid var(--border-subtle); }
+.m-sheet-title { flex: none; padding: 0 var(--m-inset) var(--space-2); font-size: var(--m-fs-head); line-height: var(--m-lh-head); font-weight: var(--weight-bold); }
+.m-sheet-body { flex: 1; overflow-y: auto; padding: var(--space-2) var(--m-inset) var(--space-5); }
+.m-sheet-actions { flex: none; display: flex; gap: var(--space-3); padding: var(--space-4) var(--m-inset) var(--space-5); }
 .m-sheet-actions .m-btn { flex: 1; }
 
 /* Full-screen dialog: long flows (Compose, Availability) slide up
@@ -256,19 +312,19 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   background: var(--color-page);
   animation: m-rise var(--m-dur-medium) var(--m-ease);
 }
-.m-fullscreen .m-fs-body { flex: 1; overflow-y: auto; padding: var(--space-4); }
-.m-fullscreen .m-fs-actions { flex: none; display: flex; gap: var(--space-2); padding: var(--space-3) var(--space-4) calc(var(--space-4) + var(--m-safe-bottom)); border-top: 1px solid var(--border-subtle); background: var(--color-panel-solid); }
+.m-fullscreen .m-fs-body { flex: 1; overflow-y: auto; padding: var(--m-inset); }
+.m-fullscreen .m-fs-actions { flex: none; display: flex; gap: var(--space-3); padding: var(--space-4) var(--m-inset) calc(var(--space-4) + var(--m-safe-bottom)); border-top: 1px solid var(--border-subtle); background: var(--color-panel-solid); }
 
 /* Basic dialog: short confirmations that must interrupt */
 .m-dialog {
   position: fixed; z-index: 46; left: var(--space-5); right: var(--space-5); top: 50%;
   transform: translateY(-50%);
-  background: var(--color-panel-solid); border-radius: var(--radius-6);
+  background: var(--color-panel-solid); border-radius: var(--m-radius-card);
   box-shadow: var(--shadow-5); padding: var(--space-5);
   animation: m-pop var(--m-dur-medium) var(--m-ease);
 }
-.m-dialog .m-dialog-title { font-size: var(--fs-5); font-weight: var(--weight-bold); margin-bottom: var(--space-2); }
-.m-dialog .m-dialog-body { font-size: var(--fs-2); color: var(--fg-low); }
+.m-dialog .m-dialog-title { font-size: var(--m-fs-title); line-height: var(--m-lh-title); font-weight: var(--weight-bold); margin-bottom: var(--space-2); }
+.m-dialog .m-dialog-body { font-size: var(--m-fs-body); line-height: var(--m-lh-body); color: var(--fg-low); }
 .m-dialog .m-dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-4); }
 
 @keyframes m-rise { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -285,10 +341,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .m-snackbar {
   display: flex; align-items: center; gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4);
   background: var(--color-inverted); color: var(--fg-on-inverted);
-  border-radius: var(--radius-4); box-shadow: var(--shadow-4);
-  font-size: var(--fs-2);
+  border-radius: var(--m-radius-inner); box-shadow: var(--shadow-4);
+  font-size: var(--m-fs-body);
   animation: m-rise var(--m-dur-medium) var(--m-ease);
 }
 .m-snackbar .m-snackbar-action { flex: none; color: var(--accent-9); font-weight: var(--weight-medium); }
@@ -301,7 +357,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
   min-height: var(--m-touch); padding: 0 var(--space-5);
   border-radius: var(--radius-full);          /* M3 buttons are pill-shaped */
-  font-size: var(--fs-2); font-weight: var(--weight-medium);
+  font-size: var(--m-fs-body); font-weight: var(--weight-medium);
   white-space: nowrap;
   transition: background-color var(--m-dur-short) var(--m-ease);
 }
@@ -310,7 +366,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .m-btn-filled  { background: var(--accent-9); color: var(--accent-contrast); }
 .m-btn-tonal   { background: var(--accent-3); color: var(--accent-11); }
 .m-btn-outlined{ background: transparent; color: var(--fg-high); box-shadow: inset 0 0 0 1px var(--border-ui); }
-.m-btn-text    { background: transparent; color: var(--accent-11); padding: 0 var(--space-3); }
+.m-btn-text    { background: transparent; color: var(--fg-high); padding: 0 var(--space-3); }
 .m-btn-danger  { background: var(--danger-solid); color: #fff; }
 
 .m-icon-btn {
@@ -330,7 +386,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   background: var(--accent-9); color: var(--accent-contrast);
   box-shadow: var(--shadow-4);
 }
-.m-fab.is-extended { padding: 0 var(--space-5); font-size: var(--fs-2); font-weight: var(--weight-medium); }
+.m-fab.is-extended { padding: 0 var(--space-5); font-size: var(--m-fs-body); font-weight: var(--weight-medium); }
 
 /* ============================================================
    LISTS  (M3 one/two/three-line list items)
@@ -338,23 +394,23 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    ============================================================ */
 .m-list { background: var(--color-panel-solid); }
 .m-list-item {
-  display: flex; align-items: center; gap: var(--space-3);
-  min-height: 56px; padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border-subtle);
+  display: flex; align-items: center; gap: var(--m-lead-gap);
+  min-height: 64px; padding: var(--space-3) var(--m-card-pad);
   color: var(--fg-high);
 }
-.m-list-item:last-child { border-bottom: 0; }
 .m-list-item .m-li-lead { flex: none; display: flex; align-items: center; justify-content: center; color: var(--fg-low); }
 .m-list-item .m-li-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.m-list-item .m-li-title { font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-high); }
-.m-list-item .m-li-sub { font-size: var(--fs-1); color: var(--fg-low); }
-.m-list-item .m-li-trail { flex: none; display: flex; align-items: center; gap: var(--space-2); color: var(--fg-subtle); font-size: var(--fs-1); }
+/* One line each, truncated. A metadata line that wraps makes every row a
+   different height and the list stops scanning as a column. */
+.m-list-item .m-li-title { font-size: var(--m-fs-body); line-height: var(--m-lh-body); font-weight: var(--weight-medium); color: var(--fg-high); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-list-item .m-li-sub { font-size: var(--m-fs-meta); line-height: var(--m-lh-meta); color: var(--fg-low); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-list-item .m-li-trail { flex: none; display: flex; align-items: center; gap: var(--space-2); color: var(--fg-subtle); font-size: var(--m-fs-meta); }
 .m-list-header {
   position: sticky; top: 0; z-index: 10;
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-5) var(--m-inset) var(--space-2);
   background: var(--color-page); color: var(--fg-low);
-  font-size: var(--fs-1); font-weight: var(--weight-medium);
-  text-transform: uppercase; letter-spacing: .04em;
+  font-size: var(--m-fs-meta); font-weight: var(--weight-semibold);
+  text-transform: uppercase; letter-spacing: .06em;
 }
 
 /* Swipeable row: actions sit behind, the surface slides to reveal */
@@ -364,7 +420,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .m-swipe .m-swipe-action {
   display: flex; align-items: center; justify-content: center;
-  width: 80px; color: #fff; font-size: var(--fs-1); font-weight: var(--weight-medium);
+  width: 80px; color: #fff; font-size: var(--m-fs-meta); font-weight: var(--weight-medium);
 }
 .m-swipe .m-swipe-action.is-danger { background: var(--danger-solid); }
 .m-swipe .m-swipe-action.is-neutral { background: var(--gray-9); }
@@ -379,28 +435,40 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    ============================================================ */
 .m-card {
   background: var(--color-panel-solid);
-  border: 1px solid var(--border-subtle);      /* outlined, not tonal */
-  border-radius: var(--radius-6);
-  padding: var(--space-4);
+  /* Shadow, not a border. A hairline outline on a white card against an
+     almost-white canvas is invisible at arm's length; a soft shadow is
+     what makes the card read as a separate object. */
+  border-radius: var(--m-radius-card);
+  box-shadow: var(--shadow-2);
+  padding: var(--m-card-pad);
 }
+/* Vertical run of cards on the canvas. This is the default page layout:
+   space between cards, never a divider. */
+.m-stack { display: flex; flex-direction: column; gap: var(--m-gap); padding: 0 var(--m-inset); }
+.m-stack.is-tight { gap: var(--space-2); }
+/* A card whose children are rows rather than prose. Rows are divided only
+   INSIDE a card, where a divider means "same group, next item". */
+.m-card.is-rows { padding: 0; overflow: hidden; }
+.m-card.is-rows > * + * { border-top: 1px solid var(--border-subtle); }
 .m-chip {
   position: relative;
   display: inline-flex; align-items: center; gap: var(--space-1);
-  min-height: 36px; padding: 0 var(--space-3);
+  min-height: 40px; padding: 0 var(--space-4);
   border-radius: var(--m-radius-chip);
   box-shadow: inset 0 0 0 1px var(--border-ui);
-  font-size: var(--fs-2); color: var(--fg-high); background: transparent;
+  font-size: var(--m-fs-meta); font-weight: var(--weight-medium);
+  color: var(--fg-high); background: transparent;
   white-space: nowrap;
 }
 .m-chip.is-selected { background: var(--accent-3); color: var(--accent-11); box-shadow: inset 0 0 0 1px var(--accent-7); }
 /* Visual stays 36px, tappable area is the full 44px (M3 does the same) */
 .m-chip::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); height: var(--m-touch); }
-.m-chip-row { display: flex; gap: var(--space-2); overflow-x: auto; padding: var(--space-1) var(--space-4); scrollbar-width: none; }
+.m-chip-row { display: flex; gap: var(--space-2); overflow-x: auto; padding: var(--space-2) var(--m-inset); scrollbar-width: none; }
 .m-chip-row::-webkit-scrollbar { display: none; }
 
 .m-badge {
-  display: inline-flex; align-items: center; height: 22px; padding: 0 var(--space-2);
-  border-radius: var(--radius-2); font-size: var(--fs-1); font-weight: var(--weight-medium);
+  display: inline-flex; align-items: center; height: 26px; padding: 0 var(--space-3);
+  border-radius: var(--radius-full); font-size: var(--m-fs-meta); font-weight: var(--weight-medium);
 }
 .m-badge.is-success { background: var(--success-bg); color: var(--success-text); }
 .m-badge.is-warning { background: var(--warning-bg); color: var(--warning-text); }
@@ -412,8 +480,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .m-segmented { display: flex; border-radius: var(--radius-full); box-shadow: inset 0 0 0 1px var(--border-ui); overflow: hidden; }
 .m-segmented-item {
-  flex: 1; min-height: var(--m-touch); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1);
-  font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-low);
+  flex: 1; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1);
+  font-size: var(--m-fs-body); font-weight: var(--weight-medium); color: var(--fg-low);
 }
 .m-segmented-item.is-active { background: var(--accent-3); color: var(--accent-11); }
 
@@ -421,25 +489,25 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    INPUTS  (M3 outlined text field)
    ============================================================ */
 .m-field { display: flex; flex-direction: column; gap: var(--space-1); }
-.m-field-label { font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-high); }
-.m-field-hint { font-size: var(--fs-1); color: var(--fg-low); }
+.m-field-label { font-size: var(--m-fs-meta); font-weight: var(--weight-semibold); color: var(--fg-low); text-transform: uppercase; letter-spacing: .05em; }
+.m-field-hint { font-size: var(--m-fs-meta); color: var(--fg-low); }
 .m-field-hint.is-error { color: var(--danger-text); }
 .m-input, .m-select, .m-textarea {
   width: 100%; min-height: var(--m-touch);
-  padding: var(--space-3); border: 0;
+  padding: var(--space-3) var(--space-4); border: 0;
   background: var(--color-surface); color: var(--fg-high);
-  border-radius: var(--radius-4);
+  border-radius: var(--m-radius-inner);
   box-shadow: inset 0 0 0 1px var(--border-ui);
-  font-family: var(--font-base); font-size: var(--fs-3);   /* 16px stops iOS zoom on focus */
+  font-family: var(--font-base); font-size: var(--m-fs-body);   /* 16px stops iOS zoom on focus */
 }
 .m-input:focus, .m-select:focus, .m-textarea:focus { outline: none; box-shadow: inset 0 0 0 2px var(--accent-8); }
 .m-textarea { min-height: 96px; resize: vertical; }
 .m-search {
   display: flex; align-items: center; gap: var(--space-2);
-  min-height: var(--m-touch); padding: 0 var(--space-3);
+  min-height: 52px; padding: 0 var(--space-4);
   background: var(--gray-3); border-radius: var(--radius-full);
 }
-.m-search input { flex: 1; border: 0; background: transparent; font-size: var(--fs-3); color: var(--fg-high); outline: none; }
+.m-search input { flex: 1; border: 0; background: transparent; font-size: var(--m-fs-body); color: var(--fg-high); outline: none; }
 
 .m-switch { position: relative; display: inline-flex; align-items: center; min-height: var(--m-touch); }
 .m-switch input { appearance: none; width: 52px; height: 32px; border-radius: var(--radius-full); background: var(--gray-6); position: relative; transition: background-color var(--m-dur-short) var(--m-ease); }
@@ -461,7 +529,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .m-stepper { display: inline-flex; align-items: center; box-shadow: inset 0 0 0 1px var(--border-ui); border-radius: var(--radius-full); }
 .m-stepper button { width: var(--m-touch); height: var(--m-touch); display: inline-flex; align-items: center; justify-content: center; color: var(--fg-high); }
-.m-stepper .m-stepper-value { min-width: 40px; text-align: center; font-size: var(--fs-3); font-weight: var(--weight-medium); }
+.m-stepper .m-stepper-value { min-width: 40px; text-align: center; font-size: var(--m-fs-body); font-weight: var(--weight-medium); }
 
 /* ============================================================
    FEEDBACK & STATE
@@ -476,11 +544,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 @keyframes m-sheen { to { transform: translateX(100%); } }
 
 .m-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-2); padding: var(--space-7) var(--space-5); }
-.m-empty .m-empty-art { width: 64px; height: 64px; border-radius: var(--radius-full); background: var(--accent-3); color: var(--accent-11); display: grid; place-content: center; margin-bottom: var(--space-2); }
-.m-empty h2 { font-size: var(--fs-4); font-weight: var(--weight-bold); }
-.m-empty p { font-size: var(--fs-2); color: var(--fg-low); max-width: 32ch; }
+.m-empty .m-empty-art { width: 80px; height: 80px; border-radius: var(--radius-full); background: var(--accent-3); color: var(--accent-11); display: grid; place-content: center; margin-bottom: var(--space-3); }
+.m-empty h2 { font-size: var(--m-fs-title); line-height: var(--m-lh-title); font-weight: var(--weight-bold); }
+.m-empty p { font-size: var(--m-fs-body); line-height: var(--m-lh-body); color: var(--fg-low); max-width: 32ch; }
 
-.m-refresh { display: flex; align-items: center; justify-content: center; gap: var(--space-2); height: 0; overflow: hidden; color: var(--fg-low); font-size: var(--fs-1); transition: height var(--m-dur-medium) var(--m-ease); }
+.m-refresh { display: flex; align-items: center; justify-content: center; gap: var(--space-2); height: 0; overflow: hidden; color: var(--fg-low); font-size: var(--m-fs-meta); transition: height var(--m-dur-medium) var(--m-ease); }
 .m-refresh.is-active { height: 48px; }
 
 /* ============================================================
@@ -489,54 +557,54 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 /* Shift card. Status colours match the desktop contract exactly:
    confirmed = green, draft = neutral, open = orange, unfulfilled = red. */
 .m-shift {
-  display: flex; align-items: stretch; gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  display: flex; align-items: center; gap: var(--m-lead-gap);
+  padding: var(--space-4) var(--m-card-pad);
   background: var(--color-panel-solid);
-  border-bottom: 1px solid var(--border-subtle);
 }
-.m-shift .m-shift-rail { flex: none; width: 4px; border-radius: var(--radius-full); background: var(--gray-6); }
+.m-shift .m-shift-rail { flex: none; align-self: stretch; width: 4px; min-height: 40px; border-radius: var(--radius-full); background: var(--gray-6); }
 .m-shift.is-confirmed .m-shift-rail { background: var(--success-solid); }
 .m-shift.is-draft     .m-shift-rail { background: var(--gray-7); }
 .m-shift.is-open      .m-shift-rail { background: var(--warning-solid); }
 .m-shift.is-unfulfilled .m-shift-rail { background: var(--danger-solid); }
 .m-shift .m-shift-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.m-shift .m-shift-time { font-size: var(--fs-3); font-weight: var(--weight-medium); color: var(--fg-high); }
-.m-shift .m-shift-meta { font-size: var(--fs-1); color: var(--fg-low); }
+.m-shift .m-shift-time { font-size: var(--m-fs-body); line-height: var(--m-lh-body); font-weight: var(--weight-semibold); color: var(--fg-high); }
+/* Same rule as list rows: metadata truncates rather than wrapping, so every
+   shift in a day card is the same height and the column stays scannable. */
+.m-shift .m-shift-meta { font-size: var(--m-fs-meta); line-height: var(--m-lh-meta); color: var(--fg-low); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .m-shift .m-shift-trail { flex: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: var(--space-1); }
 
 /* Agenda day header: sticks under the app bar while its day scrolls */
 .m-day-header {
   position: sticky; top: 0; z-index: 10;
-  display: flex; align-items: baseline; gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
+  display: flex; align-items: baseline; gap: var(--space-3);
+  padding: var(--space-5) var(--m-inset) var(--space-3);
   background: var(--color-page);
-  border-bottom: 1px solid var(--border-subtle);
 }
-.m-day-header .m-day-num { font-size: var(--fs-5); font-weight: var(--weight-bold); color: var(--fg-high); }
-.m-day-header .m-day-name { font-size: var(--fs-2); color: var(--fg-low); }
-.m-day-header .m-day-count { margin-left: auto; font-size: var(--fs-1); color: var(--fg-subtle); }
+.m-day-header .m-day-num { min-width: 32px; font-size: var(--m-fs-head); line-height: var(--m-lh-head); font-weight: var(--weight-bold); color: var(--fg-high); font-variant-numeric: tabular-nums; }
+.m-day-header .m-day-name { font-size: var(--m-fs-body); font-weight: var(--weight-medium); color: var(--fg-low); }
+.m-day-header .m-day-count { margin-left: auto; font-size: var(--m-fs-meta); color: var(--fg-subtle); }
 .m-day-header.is-today .m-day-num { color: var(--accent-11); }
-.m-day-header.is-today::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent-9); }
+.m-day-header.is-today .m-day-name::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: var(--space-2); border-radius: var(--radius-full); background: var(--accent-9); vertical-align: middle; }
 
 /* Reachability summary, ported from Communications */
 .m-reach { display: flex; flex-direction: column; gap: var(--space-1); }
-.m-reach-row { display: flex; align-items: baseline; gap: var(--space-2); font-size: var(--fs-2); }
-.m-reach-row .m-reach-label { min-width: 88px; font-weight: var(--weight-medium); }
+.m-reach-row { display: flex; align-items: baseline; gap: var(--space-3); font-size: var(--m-fs-body); }
+.m-reach-row .m-reach-label { min-width: 104px; font-weight: var(--weight-medium); }
 .m-reach-row.is-ok .m-reach-label { color: var(--success-text); }
 .m-reach-row.is-blocked .m-reach-label { color: var(--warning-text); }
-.m-reach-row .m-reach-why { font-size: var(--fs-1); color: var(--fg-low); }
+.m-reach-row .m-reach-why { font-size: var(--m-fs-meta); color: var(--fg-low); }
 
 /* Readiness checklist row, ported from Compose */
-.m-ready-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); width: 100%; text-align: left; }
+.m-ready-row { display: flex; align-items: center; gap: var(--m-lead-gap); padding: var(--space-4) var(--m-card-pad); width: 100%; text-align: left; }
 .m-ready-row .m-ready-icon { flex: none; }
 .m-ready-row .m-ready-text { flex: 1; min-width: 0; }
-.m-ready-row .m-ready-label { font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-high); display: block; }
-.m-ready-row .m-ready-sub { font-size: var(--fs-1); color: var(--fg-low); }
+.m-ready-row .m-ready-label { font-size: var(--m-fs-body); font-weight: var(--weight-semibold); color: var(--fg-high); display: block; }
+.m-ready-row .m-ready-sub { font-size: var(--m-fs-meta); line-height: var(--m-lh-meta); color: var(--fg-low); }
 .m-ready-row .m-ready-sub.is-error { color: var(--danger-text); }
 
 /* Avatar reuse, sized up for touch contexts */
-.m-avatar { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: var(--radius-full); color: #fff; font-size: var(--fs-2); font-weight: var(--weight-medium); flex: none; }
-.m-avatar.is-sm { width: 32px; height: 32px; font-size: var(--fs-1); }
+.m-avatar { display: inline-flex; align-items: center; justify-content: center; width: var(--m-lead); height: var(--m-lead); border-radius: var(--radius-full); color: #fff; font-size: var(--m-fs-meta); font-weight: var(--weight-semibold); flex: none; }
+.m-avatar.is-sm { width: 32px; height: 32px; font-size: var(--m-fs-micro); }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
@@ -555,92 +623,106 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 /* Avatar colours as classes so a person keeps one colour across every
    screen without repeating an inline style at each call site. */
-.av-c1 { background: var(--chart-1); } .av-c2 { background: var(--chart-2); }
-.av-c3 { background: var(--chart-3); } .av-c4 { background: var(--chart-4); }
-.av-c5 { background: var(--chart-5); } .av-c6 { background: var(--chart-6); }
-.av-c7 { background: var(--chart-7); } .av-c8 { background: var(--chart-8); }
+/* The chart ramp is built for large filled areas, where a 3.2:1 fill is
+   fine. White initials on a 40px disc is text, so each hue is darkened to
+   the point where white clears 4.5:1 and no further - the identity colour
+   still reads as itself down a roster.
+     c1 3.26 -> 4.64   c2 3.16 -> 4.64   c3 3.85 -> 4.61   c5 3.74 -> 4.63
+     c7 4.12 -> 4.61   c8 4.10 -> 4.61   c4 and c6 already passed. */
+.av-c1 { background: #0076d2; } .av-c2 { background: #278457; }
+.av-c3 { background: #e11a6a; } .av-c4 { background: var(--chart-4); }
+.av-c5 { background: #0c8379; } .av-c6 { background: var(--chart-6); }
+.av-c7 { background: #d22d96; } .av-c8 { background: #558129; }
 
 /* Section heading with an optional trailing link. Used on Home to head
    each preview block and on detail screens to head each group. */
 .m-sec-head {
   display: flex; align-items: baseline; gap: var(--space-2);
-  padding: var(--space-5) var(--space-4) var(--space-2);
+  padding: var(--space-6) var(--m-inset) var(--space-3);
 }
-.m-sec-head h2 { flex: 1; font-size: var(--fs-4); font-weight: var(--weight-bold); color: var(--fg-high); }
+.m-sec-head h2 { flex: 1; font-size: var(--m-fs-title); line-height: var(--m-lh-title); font-weight: var(--weight-bold); color: var(--fg-high); }
 .m-sec-head .m-sec-link {
-  flex: none; font-size: var(--fs-2); font-weight: var(--weight-medium);
+  flex: none; font-size: var(--m-fs-meta); font-weight: var(--weight-semibold);
   color: var(--fg-low); background: none; border: 0; cursor: pointer;
   /* The label is small, so the hit area is grown past the text rather
      than padding the text itself and pushing the heading off baseline. */
   position: relative; padding: var(--space-1) 0;
 }
 .m-sec-head .m-sec-link::before { content: ""; position: absolute; inset: -10px -8px; }
-.m-sec-head .m-sec-sub { flex: none; font-size: var(--fs-1); color: var(--fg-subtle); }
+.m-sec-head .m-sec-sub { flex: none; font-size: var(--m-fs-meta); color: var(--fg-subtle); }
 
 /* Greeting block at the top of Home */
-.m-greet { padding: var(--space-2) var(--space-4) var(--space-4); }
-.m-greet .m-greet-hi { font-size: var(--fs-2); color: var(--fg-low); }
-.m-greet .m-greet-name { font-size: var(--fs-7); line-height: var(--lh-7); font-weight: var(--weight-bold); color: var(--fg-high); }
-.m-greet .m-greet-where { font-size: var(--fs-2); color: var(--fg-low); margin-top: 2px; }
+.m-greet { padding: var(--space-5) var(--m-inset); }
+.m-greet .m-greet-hi { font-size: var(--m-fs-meta); font-weight: var(--weight-semibold); color: var(--fg-subtle); text-transform: uppercase; letter-spacing: .06em; }
+.m-greet .m-greet-name { font-size: var(--m-fs-hero); line-height: var(--m-lh-hero); font-weight: var(--weight-bold); color: var(--fg-high); letter-spacing: -0.02em; margin-top: var(--space-1); }
+.m-greet .m-greet-where { font-size: var(--m-fs-body); line-height: var(--m-lh-body); color: var(--fg-low); margin-top: var(--space-1); }
 
 /* KPI tiles. Two per row rather than a horizontal scroller: four numbers
    fit a phone width at 2x2, and a scroller would hide half of them behind
    a gesture the user has no reason to expect. */
-.m-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); padding: 0 var(--space-4); }
+.m-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: var(--m-gap); padding: 0 var(--m-inset); }
 .m-kpi {
-  background: var(--color-panel-solid); border-radius: var(--radius-4);
-  box-shadow: inset 0 0 0 1px var(--border-subtle);
-  padding: var(--space-3) var(--space-4); display: flex; flex-direction: column; gap: 2px;
+  background: var(--color-panel-solid); border-radius: var(--m-radius-card);
+  box-shadow: var(--shadow-2);
+  padding: var(--m-card-pad); display: flex; flex-direction: column; gap: var(--space-1);
 }
-.m-kpi .m-kpi-val { font-size: var(--fs-7); line-height: 1.1; font-weight: var(--weight-bold); color: var(--fg-high); font-variant-numeric: tabular-nums; }
-.m-kpi .m-kpi-label { font-size: var(--fs-1); color: var(--fg-low); }
-.m-kpi .m-kpi-delta { font-size: var(--fs-1); font-weight: var(--weight-medium); }
+/* The number carries the card. 32px against a 13px label is the contrast
+   that makes a metric read at a glance rather than word by word. */
+.m-kpi .m-kpi-val { font-size: var(--m-fs-hero); line-height: var(--m-lh-hero); font-weight: var(--weight-bold); color: var(--fg-high); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.m-kpi .m-kpi-label { font-size: var(--m-fs-meta); line-height: var(--m-lh-meta); color: var(--fg-low); }
+.m-kpi .m-kpi-delta { font-size: var(--m-fs-meta); font-weight: var(--weight-semibold); }
 .m-kpi .m-kpi-delta.is-up { color: var(--success-text); }
 .m-kpi .m-kpi-delta.is-down { color: var(--danger-text); }
-.m-kpi.is-alert { box-shadow: inset 0 0 0 1px var(--danger-border); }
+.m-kpi.is-alert { box-shadow: var(--shadow-2), inset 0 0 0 1.5px var(--danger-border); }
 .m-kpi.is-alert .m-kpi-val { color: var(--danger-text); }
 
 /* Attention card: the one thing on Home that is a queue rather than a
    readout. Amber is deliberately absent - the severity lives in the rows. */
-.m-attn { margin: 0 var(--space-4); background: var(--color-panel-solid); border-radius: var(--radius-4); box-shadow: inset 0 0 0 1px var(--border-subtle); overflow: hidden; }
-.m-attn-head { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); }
-.m-attn-head .m-attn-title { flex: 1; font-size: var(--fs-3); font-weight: var(--weight-bold); }
-.m-attn-row { display: flex; align-items: center; gap: var(--space-3); width: 100%; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); text-align: left; }
-.m-attn-row:last-child { border-bottom: 0; }
-.m-attn-row .m-attn-dot { flex: none; width: 8px; height: 8px; border-radius: var(--radius-full); }
-.m-attn-row .m-attn-dot.is-danger { background: var(--danger-solid); }
-.m-attn-row .m-attn-dot.is-warning { background: var(--warning-solid); }
+.m-attn { margin: 0 var(--m-inset); background: var(--color-panel-solid); border-radius: var(--m-radius-card); box-shadow: var(--shadow-2); overflow: hidden; }
+.m-attn-head { display: flex; align-items: center; gap: var(--space-3); padding: var(--m-card-pad) var(--m-card-pad) var(--space-3); }
+.m-attn-head .m-attn-title { flex: 1; font-size: var(--m-fs-title); line-height: var(--m-lh-title); font-weight: var(--weight-bold); }
+.m-attn-row { display: flex; align-items: center; gap: var(--m-lead-gap); width: 100%; padding: var(--space-3) var(--m-card-pad); text-align: left; }
+.m-attn-row + .m-attn-row { border-top: 1px solid var(--border-subtle); }
+/* Severity reads from a tinted disc rather than an 8px dot: at arm's length
+   a small dot is not a signal, it is a speck. */
+.m-attn-row .m-attn-dot { flex: none; width: var(--m-lead); height: var(--m-lead); border-radius: var(--radius-full); display: grid; place-content: center; }
+.m-attn-row .m-attn-dot::after { content: ""; width: 10px; height: 10px; border-radius: var(--radius-full); }
+.m-attn-row .m-attn-dot.is-danger { background: var(--danger-bg); }
+.m-attn-row .m-attn-dot.is-danger::after { background: var(--danger-solid); }
+.m-attn-row .m-attn-dot.is-warning { background: var(--warning-bg); }
+.m-attn-row .m-attn-dot.is-warning::after { background: var(--warning-solid); }
 .m-attn-row .m-attn-text { flex: 1; min-width: 0; }
-.m-attn-row .m-attn-what { display: block; font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-high); }
-.m-attn-row .m-attn-when { display: block; font-size: var(--fs-1); color: var(--fg-low); }
-.m-attn-foot { padding: var(--space-2) var(--space-4) var(--space-3); }
+.m-attn-row .m-attn-what { display: block; font-size: var(--m-fs-body); line-height: var(--m-lh-body); font-weight: var(--weight-semibold); color: var(--fg-high); }
+.m-attn-row .m-attn-when { display: block; font-size: var(--m-fs-meta); line-height: var(--m-lh-meta); color: var(--fg-low); }
+.m-attn-foot { padding: var(--space-2) var(--space-3) var(--space-3); border-top: 1px solid var(--border-subtle); }
 
 /* Community post */
-.m-post { padding: var(--space-4); border-bottom: 1px solid var(--border-subtle); }
-.m-post-head { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2); }
+.m-post { padding: var(--m-card-pad); background: var(--color-panel-solid); border-radius: var(--m-radius-card); box-shadow: var(--shadow-2); }
+.m-post-head { display: flex; align-items: center; gap: var(--m-lead-gap); margin-bottom: var(--space-3); }
 .m-post-head .m-post-who { flex: 1; min-width: 0; }
-.m-post-head .m-post-name { display: block; font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-high); }
-.m-post-head .m-post-meta { display: block; font-size: var(--fs-1); color: var(--fg-low); }
-.m-post-body { font-size: var(--fs-2); line-height: var(--lh-3); color: var(--fg-high); }
-.m-post-actions { display: flex; gap: var(--space-1); margin-top: var(--space-2); }
-.m-post-act { display: inline-flex; align-items: center; gap: 6px; height: var(--m-touch); padding: 0 var(--space-2); margin-left: calc(var(--space-2) * -1); font-size: var(--fs-1); color: var(--fg-low); background: none; border: 0; border-radius: var(--radius-3); cursor: pointer; }
+.m-post-head .m-post-name { display: block; font-size: var(--m-fs-body); font-weight: var(--weight-semibold); color: var(--fg-high); }
+.m-post-head .m-post-meta { display: block; font-size: var(--m-fs-meta); color: var(--fg-low); }
+.m-post-body { font-size: var(--m-fs-body); line-height: var(--m-lh-body); color: var(--fg-high); }
+.m-post-actions { display: flex; gap: var(--space-1); margin-top: var(--space-3); }
+.m-post-act { display: inline-flex; align-items: center; gap: 6px; height: var(--m-touch); padding: 0 var(--space-3); margin-left: calc(var(--space-3) * -1); font-size: var(--m-fs-meta); font-weight: var(--weight-medium); color: var(--fg-low); background: none; border: 0; border-radius: var(--radius-full); cursor: pointer; }
 .m-post-act.is-on { color: var(--accent-11); }
 
 /* Key/value rows on detail screens */
-.m-kv { display: flex; gap: var(--space-4); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); font-size: var(--fs-2); }
+.m-kv { display: flex; gap: var(--space-4); padding: var(--space-3) var(--m-card-pad); font-size: var(--m-fs-body); line-height: var(--m-lh-body); }
+.m-kv + .m-kv { border-top: 1px solid var(--border-subtle); }
 .m-kv .m-kv-k { flex: none; width: 40%; color: var(--fg-low); }
 .m-kv .m-kv-v { flex: 1; min-width: 0; color: var(--fg-high); }
 .m-kv .m-kv-v.is-empty { color: var(--fg-subtle); }
 
 /* Profile header on the BFM detail screen */
-.m-profile { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-1); padding: var(--space-5) var(--space-4) var(--space-4); }
-.m-profile .m-avatar { width: 72px; height: 72px; font-size: var(--fs-6); }
-.m-profile .m-profile-name { font-size: var(--fs-6); font-weight: var(--weight-bold); margin-top: var(--space-2); }
-.m-profile .m-profile-role { font-size: var(--fs-2); color: var(--fg-low); }
+.m-profile { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-1); padding: var(--space-6) var(--m-inset) var(--space-5); }
+.m-profile .m-avatar { width: 88px; height: 88px; font-size: var(--m-fs-head); }
+.m-profile .m-profile-name { font-size: var(--m-fs-head); line-height: var(--m-lh-head); font-weight: var(--weight-bold); margin-top: var(--space-3); }
+.m-profile .m-profile-role { font-size: var(--m-fs-body); color: var(--fg-low); }
 .m-profile-actions { display: flex; gap: var(--space-2); margin-top: var(--space-3); }
 
 /* Inline alert banner, for certification expiry and suspension notes */
-.m-alert { display: flex; gap: var(--space-3); margin: 0 var(--space-4) var(--space-3); padding: var(--space-3); border-radius: var(--radius-3); font-size: var(--fs-1); line-height: var(--lh-2); }
+.m-alert { display: flex; gap: var(--space-3); margin: 0 var(--m-inset) var(--space-3); padding: var(--space-4); border-radius: var(--m-radius-inner); font-size: var(--m-fs-meta); line-height: var(--m-lh-meta); }
 .m-alert.is-warning { background: var(--warning-bg); color: var(--warning-text); }
 .m-alert.is-danger { background: var(--danger-bg); color: var(--danger-text); }
 .m-alert.is-info { background: var(--info-bg); color: var(--info-text); }
@@ -648,8 +730,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 /* Month grid inside the date sheet */
 .m-month { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-.m-month .m-month-dow { text-align: center; font-size: var(--fs-1); color: var(--fg-subtle); padding-bottom: var(--space-2); }
-.m-month-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; background: none; border-radius: var(--radius-3); font-size: var(--fs-2); color: var(--fg-high); cursor: pointer; }
+.m-month .m-month-dow { text-align: center; font-size: var(--m-fs-meta); color: var(--fg-subtle); padding-bottom: var(--space-2); }
+.m-month-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; background: none; border-radius: var(--radius-3); font-size: var(--m-fs-body); color: var(--fg-high); cursor: pointer; }
 .m-month-day.is-out { color: var(--fg-subtle); }
 .m-month-day.is-today { font-weight: var(--weight-bold); color: var(--accent-11); }
 .m-month-day.is-selected { background: var(--accent-9); color: #fff; font-weight: var(--weight-medium); }
@@ -668,15 +750,17 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .m-group { position: relative; }
 
 /* Compose review summary */
-.m-review-block { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); }
-.m-review-block .m-review-k { font-size: var(--fs-1); color: var(--fg-subtle); text-transform: uppercase; letter-spacing: .05em; margin-bottom: var(--space-1); }
-.m-review-msg { background: var(--gray-2); border-radius: var(--radius-3); padding: var(--space-3); font-size: var(--fs-2); line-height: var(--lh-3); white-space: pre-wrap; }
+.m-review-block { padding: var(--space-4) var(--m-inset); }
+.m-review-block + .m-review-block { border-top: 1px solid var(--border-subtle); }
+.m-review-block .m-review-k { font-size: var(--m-fs-meta); font-weight: var(--weight-semibold); color: var(--fg-subtle); text-transform: uppercase; letter-spacing: .06em; margin-bottom: var(--space-2); }
+.m-review-msg { background: var(--gray-3); border-radius: var(--m-radius-inner); padding: var(--space-4); font-size: var(--m-fs-body); line-height: var(--m-lh-body); white-space: pre-wrap; }
 
 /* Selectable row used by audience and recipient pickers */
-.m-pick { display: flex; align-items: center; gap: var(--space-3); width: 100%; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); text-align: left; background: none; border-left: 0; border-right: 0; border-top: 0; cursor: pointer; }
+.m-pick { display: flex; align-items: center; gap: var(--m-lead-gap); width: 100%; min-height: 64px; padding: var(--space-3) var(--m-inset); text-align: left; background: none; border: 0; cursor: pointer; }
+.m-pick + .m-pick { border-top: 1px solid var(--border-subtle); }
 .m-pick .m-pick-text { flex: 1; min-width: 0; }
-.m-pick .m-pick-title { display: block; font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-high); }
-.m-pick .m-pick-sub { display: block; font-size: var(--fs-1); color: var(--fg-low); }
+.m-pick .m-pick-title { display: block; font-size: var(--m-fs-body); line-height: var(--m-lh-body); font-weight: var(--weight-medium); color: var(--fg-high); }
+.m-pick .m-pick-sub { display: block; font-size: var(--m-fs-meta); line-height: var(--m-lh-meta); color: var(--fg-low); }
 .m-pick .m-pick-check { flex: none; color: var(--accent-11); opacity: 0; }
 .m-pick.is-selected .m-pick-check { opacity: 1; }
 

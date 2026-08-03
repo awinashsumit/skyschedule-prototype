@@ -21,44 +21,63 @@
     return '<span class="m-avatar' + (sm ? ' is-sm' : '') + ' av-' + b.avatar + '">' + esc(b.initials) + '</span>';
   }
 
-  /* Icon set. Kept as one map because the same glyph appears on three or
-     four screens and duplicating the path data drifts over time. */
-  var P = {
-    chevron: '<path d="m9 18 6-6-6-6"/>',
-    back: '<path d="m15 18-6-6 6-6"/>',
-    close: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
-    plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
-    minusOnly: '<path d="M5 12h14"/>',
-    check: '<path d="M20 6 9 17l-5-5"/>',
-    checkCircle: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
-    warn: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
-    circle: '<circle cx="12" cy="12" r="10"/>',
-    clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
-    calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
-    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/>',
-    message: '<path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/>',
-    pin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
-    swap: '<path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/>',
-    heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
-    comment: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
-    phone: '<path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/>',
-    mail: '<path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/>',
-    trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
-    settings: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
-    help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
-    bell: '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>',
-    building: '<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/>',
-    briefcase: '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
-    layers: '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12.18a1 1 0 0 0 .6.9l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 .58-.9"/>',
-    logout: '<path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>',
-    edit: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>',
-    filter: '<path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/>'
+  /* ---- Icons ------------------------------------------------------
+     Lucide, loaded as a real library. This map is only a rename table
+     from the words this app uses to Lucide's own names, so a rename
+     upstream is a one-line fix here rather than a hunt through markup.
+
+     icon() emits a placeholder; Lucide swaps it for an <svg>. The swap is
+     driven by a MutationObserver rather than a call after every render,
+     because icons are injected from a dozen places (sheets, dialogs,
+     full-screen flows, snackbars) and one forgotten call is an invisible
+     blank square. */
+  var LUCIDE = {
+    chevron: 'chevron-right', back: 'chevron-left', close: 'x',
+    plus: 'plus', minusOnly: 'minus', check: 'check',
+    checkCircle: 'circle-check-big', warn: 'triangle-alert', circle: 'info',
+    clock: 'clock', calendar: 'calendar', users: 'users',
+    message: 'message-square', pin: 'map-pin', swap: 'arrow-right-left',
+    heart: 'heart', comment: 'message-circle', phone: 'phone', mail: 'mail',
+    trash: 'trash-2', settings: 'settings', help: 'circle-help', bell: 'bell',
+    building: 'building-2', briefcase: 'briefcase', layers: 'layers',
+    logout: 'log-out', edit: 'pencil', filter: 'list-filter', search: 'search'
   };
+
   function icon(name, size, stroke) {
-    return '<svg viewBox="0 0 24 24" width="' + (size || 24) + '" height="' + (size || 24) +
-      '" fill="none" stroke="currentColor" stroke-width="' + (stroke || 1.75) +
-      '" stroke-linecap="round" stroke-linejoin="round">' + (P[name] || '') + '</svg>';
+    var n = LUCIDE[name] || name;
+    size = size || 24;
+    return '<i data-lucide="' + n + '" style="width:' + size + 'px;height:' + size +
+      'px;display:inline-flex;flex:none;" data-sw="' + (stroke || 1.75) + '"></i>';
   }
+
+  var painting = false;
+  var iconObserver;
+  function paintIcons() {
+    /* Three guards, each for a distinct way this can run away:
+       1. `painting` - createIcons mutates the DOM, which would re-enter here.
+       2. disconnect/reconnect - so our own mutations are not observed.
+       3. the `i[...]` selector plus the attribute strip below - createIcons
+          copies data-lucide onto the <svg> it produces, so a bare
+          [data-lucide] test is true forever and every pass would rewrite
+          every icon on the page. */
+    if (painting || !w.lucide || !d.querySelector('i[data-lucide]')) return;
+    painting = true;
+    iconObserver.disconnect();
+    try {
+      w.lucide.createIcons();
+      $$('svg[data-lucide]').forEach(function (svg) {
+        svg.removeAttribute('data-lucide');
+        var sw = svg.getAttribute('data-sw');
+        if (sw) { svg.setAttribute('stroke-width', sw); svg.removeAttribute('data-sw'); }
+      });
+    } finally {
+      iconObserver.observe(d.documentElement, { childList: true, subtree: true });
+      painting = false;
+    }
+  }
+  iconObserver = new MutationObserver(paintIcons);
+  iconObserver.observe(d.documentElement, { childList: true, subtree: true });
+
   function iconBtn(name, label, attrs) {
     return '<button class="m-icon-btn state-layer" aria-label="' + esc(label) + '" ' + (attrs || '') + '>' + icon(name) + '</button>';
   }
@@ -121,7 +140,7 @@
       '<div class="m-sheet" role="dialog" aria-modal="true" aria-label="' + esc(o.title || 'Options') + '">' +
         '<div class="m-sheet-handle"><span></span></div>' +
         (o.title ? '<div class="m-sheet-title">' + esc(o.title) + '</div>' : '') +
-        (o.sub ? '<div style="padding:0 var(--space-4) var(--space-2);font-size:var(--fs-2);color:var(--fg-low);">' + esc(o.sub) + '</div>' : '') +
+        (o.sub ? '<div style="padding:0 var(--m-inset) var(--space-2);font-size:var(--m-fs-body);color:var(--fg-low);">' + esc(o.sub) + '</div>' : '') +
         '<div class="m-sheet-body"' + (o.rows ? ' style="padding-left:0;padding-right:0;"' : '') + '>' + body + '</div>' +
         (o.actions ? '<div class="m-sheet-actions">' + o.actions + '</div>' : '') +
       '</div>',
@@ -273,7 +292,7 @@
         '</div>');
     } else {
       h.push('<div class="m-attn"><div class="m-attn-head"><span class="m-attn-title">Needs attention</span></div>' +
-        '<div style="padding:var(--space-4);font-size:var(--fs-2);color:var(--fg-low);">Every shift this week is covered.</div></div>');
+        '<div style="padding:var(--m-inset);font-size:var(--m-fs-body);color:var(--fg-low);">Every shift this week is covered.</div></div>');
     }
 
     h.push('<div class="m-sec-head"><h2>This week</h2>' +
@@ -288,7 +307,7 @@
     /* Requests are separated from exceptions because they are someone
        else's ask, not a gap in the roster. Different verb, different queue. */
     h.push('<div class="m-sec-head"><h2>Needs review</h2><span class="m-sec-sub">' + S.REVIEWS.length + ' waiting</span></div>');
-    h.push('<div class="m-list" style="border-top:1px solid var(--border-subtle);">' +
+    h.push('<div class="m-stack"><div class="m-card is-rows">' +
       S.REVIEWS.map(function (r) {
         var b = S.byId(r.bfmId);
         var line = r.type === 'swap' ? 'Wants to drop ' + r.when + ', ' + r.time
@@ -299,16 +318,17 @@
           '<span class="m-li-text"><span class="m-li-title">' + esc(S.fullName(b)) + '</span>' +
           '<span class="m-li-sub">' + esc(line) + '</span></span>' +
           '<span class="m-li-trail">' + esc(r.age) + icon('chevron', 20) + '</span></button>';
-      }).join('') + '</div>');
+      }).join('') + '</div></div>');
 
     h.push('<div class="m-sec-head"><h2>Today</h2>' +
       '<button class="m-sec-link" data-goto="schedule">View schedule</button></div>');
-    h.push(today.length ? today.map(shiftRow).join('')
-      : '<div style="padding:var(--space-4);font-size:var(--fs-2);color:var(--fg-low);">Nothing scheduled today.</div>');
+    h.push(today.length
+      ? '<div class="m-stack"><div class="m-card is-rows">' + today.map(shiftRow).join('') + '</div></div>'
+      : '<div class="m-stack"><div class="m-card" style="color:var(--fg-low);">Nothing scheduled today.</div></div>');
 
     h.push('<div class="m-sec-head"><h2>Community</h2>' +
       '<button class="m-sec-link" data-open="community">View all</button></div>');
-    h.push(S.POSTS.slice(0, 2).map(postCard).join(''));
+    h.push('<div class="m-stack">' + S.POSTS.slice(0, 2).map(postCard).join('') + '</div>');
 
     $('#homeBody').innerHTML = h.join('');
     wireHome();
@@ -328,7 +348,7 @@
   function shiftRow(s) {
     var b = S.byId(s.bfmId);
     var trail = (s.status === 'open' || s.status === 'unfulfilled')
-      ? '<button class="m-btn m-btn-tonal state-layer" data-assign="' + s.id + '" style="padding:0 var(--space-4);">Assign</button>'
+      ? '<button class="m-btn m-btn-tonal state-layer" data-assign="' + s.id + '" style="padding:0 var(--m-inset);">Assign</button>'
       : badge(s.status);
     return '<div class="m-shift is-' + s.status + ' state-layer" data-shift="' + s.id + '">' +
       '<span class="m-shift-rail"></span>' +
@@ -430,10 +450,10 @@
     sheet({
       title: S.fullName(b),
       body: '<div style="display:flex;align-items:center;gap:var(--space-3);padding-bottom:var(--space-3);">' +
-              avatar(b) + '<div><div style="font-size:var(--fs-2);font-weight:var(--weight-medium);">' + esc(b.primary) + '</div>' +
-              '<div style="font-size:var(--fs-1);color:var(--fg-low);">Requested ' + esc(r.age) + '</div></div></div>' +
+              avatar(b) + '<div><div style="font-size:var(--m-fs-body);font-weight:var(--weight-medium);">' + esc(b.primary) + '</div>' +
+              '<div style="font-size:var(--m-fs-meta);color:var(--fg-low);">Requested ' + esc(r.age) + '</div></div></div>' +
             lines.map(function (l) {
-              return '<div style="display:flex;gap:var(--space-4);padding:var(--space-2) 0;font-size:var(--fs-2);">' +
+              return '<div style="display:flex;gap:var(--space-4);padding:var(--space-2) 0;font-size:var(--m-fs-body);">' +
                 '<span style="width:40%;color:var(--fg-low);">' + esc(l[0]) + '</span>' +
                 '<span style="flex:1;">' + esc(l[1]) + '</span></div>';
             }).join('') +
@@ -477,7 +497,7 @@
     fullscreen({
       title: 'Community', back: true, onBack: function () {},
       flush: true,
-      body: '<div id="feedList">' + S.POSTS.map(postCard).join('') + '</div>',
+      body: '<div class="m-stack" style="padding:var(--m-inset) 0;" id="feedList">' + S.POSTS.map(postCard).join('') + '</div>',
       actions: '<button class="m-btn m-btn-filled state-layer" id="newPost" style="flex:1;">New post</button>',
       wire: function (node) {
         wirePosts(node);
@@ -527,26 +547,27 @@
         { id: 'help', icon: 'help', title: 'Help and support' }
       ] }
     ];
-    var h = ['<button class="m-list-item state-layer" data-open="profile" style="width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0;padding-top:var(--space-4);padding-bottom:var(--space-4);">' +
+    var h = ['<div class="m-stack" style="padding-top:var(--space-4);">' +
+      '<button class="m-card m-list-item state-layer" data-open="profile" style="width:100%;text-align:left;padding:var(--space-4) var(--m-card-pad);">' +
       '<span class="m-li-lead">' + avatar(me) + '</span>' +
-      '<span class="m-li-text"><span class="m-li-title" style="font-size:var(--fs-3);">' + esc(me.first + ' ' + me.last) + '</span>' +
+      '<span class="m-li-text"><span class="m-li-title" style="font-size:var(--m-fs-title);">' + esc(me.first + ' ' + me.last) + '</span>' +
       '<span class="m-li-sub">' + esc(me.primary) + '</span></span>' +
-      '<span class="m-li-trail">' + icon('chevron', 20) + '</span></button>'];
+      '<span class="m-li-trail">' + icon('chevron', 20) + '</span></button></div>'];
 
     groups.forEach(function (g) {
       h.push('<div class="m-list-header">' + esc(g.label) + '</div>');
-      h.push(g.items.map(function (it) {
-        return '<button class="m-list-item state-layer" data-open="' + it.id + '" style="width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0;">' +
-          '<span class="m-li-lead">' + icon(it.icon, 22) + '</span>' +
+      h.push('<div class="m-stack"><div class="m-card is-rows">' + g.items.map(function (it) {
+        return '<button class="m-list-item state-layer" data-open="' + it.id + '" style="width:100%;text-align:left;background:none;border:0;">' +
+          '<span class="m-li-lead" style="width:var(--m-lead);height:var(--m-lead);border-radius:var(--radius-full);background:var(--gray-3);display:grid;place-content:center;">' + icon(it.icon, 20) + '</span>' +
           '<span class="m-li-text"><span class="m-li-title">' + esc(it.title) + '</span>' +
           (it.sub ? '<span class="m-li-sub">' + esc(it.sub) + '</span>' : '') + '</span>' +
           '<span class="m-li-trail">' + icon('chevron', 20) + '</span></button>';
-      }).join(''));
+      }).join('') + '</div></div>');
     });
 
-    h.push('<div style="padding:var(--space-5) var(--space-4);">' +
+    h.push('<div style="padding:var(--space-6) var(--m-inset);">' +
       '<button class="m-btn m-btn-outlined state-layer" id="signOut" style="width:100%;">' + icon('logout', 18) + ' Sign out</button>' +
-      '<div style="text-align:center;margin-top:var(--space-4);font-size:var(--fs-1);color:var(--fg-subtle);">skySchedule &middot; prototype build</div></div>');
+      '<div style="text-align:center;margin-top:var(--space-4);font-size:var(--m-fs-meta);color:var(--fg-subtle);">skySchedule &middot; prototype build</div></div>');
 
     $('#moreBody').innerHTML = h.join('');
     $$('[data-open]', $('#moreBody')).forEach(function (b) {
@@ -565,8 +586,8 @@
         body: '<div class="m-profile">' + avatar(me) +
           '<div class="m-profile-name">' + esc(me.first + ' ' + me.last) + '</div>' +
           '<div class="m-profile-role">' + esc(me.primary) + '</div></div>' +
-          kv('Email', me.email) + kv('Role', 'Administrator') +
-          kv('Locations', S.LOCATIONS.join(', ')) + kv('Time zone', 'Pacific Time (US)') });
+          '<div class="m-stack">' + card(kv('Email', me.email) + kv('Role', 'Administrator') +
+          kv('Locations', S.LOCATIONS.join(', ')) + kv('Time zone', 'Pacific Time (US)')) + '</div>' });
     }
     if (id === 'locations') return simpleList('Locations', S.LOCATIONS.map(function (l, i) {
       return { title: l, sub: [12, 6, 5][i] + ' shifts this week' };
@@ -582,14 +603,21 @@
     if (id === 'hris') return fullscreen({ title: 'HRIS integration', back: true, onBack: function () {}, flush: true,
       body: '<div class="m-alert is-info" style="margin:var(--space-4);">' + icon('checkCircle', 18) +
         '<span>Connected to Workday. Last sync 6:00 AM today.</span></div>' +
-        kv('Provider', 'Workday') + kv('Records synced', S.BFMS.length + ' people') +
-        kv('Sync schedule', 'Daily at 6:00 AM') + kv('Conflicts', 'None') });
+        '<div class="m-stack">' + card(kv('Provider', 'Workday') + kv('Records synced', S.BFMS.length + ' people') +
+        kv('Sync schedule', 'Daily at 6:00 AM') + kv('Conflicts', 'None')) + '</div>' });
     if (id === 'notifications') return notificationSettings();
     if (id === 'help') return simpleList('Help and support', [
       { title: 'Getting started guide' }, { title: 'Creating and filling shifts' },
       { title: 'Sending messages' }, { title: 'Contact support' }
     ]);
   }
+
+  /* Wraps a run of rows in a card, so a detail screen is a short stack of
+     grouped cards rather than one undifferentiated column of rules. */
+  function card(inner, cls) {
+    return '<div class="m-card is-rows' + (cls ? ' ' + cls : '') + '">' + inner + '</div>';
+  }
+  APP.card = card;
 
   function kv(k, v) {
     return '<div class="m-kv"><span class="m-kv-k">' + esc(k) + '</span>' +
@@ -599,11 +627,11 @@
 
   function simpleList(title, items) {
     fullscreen({ title: title, back: true, onBack: function () {}, flush: true,
-      body: items.map(function (it) {
+      body: '<div class="m-stack" style="padding-top:var(--space-4);">' + card(items.map(function (it) {
         return '<div class="m-list-item"><span class="m-li-text">' +
           '<span class="m-li-title">' + esc(it.title) + '</span>' +
           (it.sub ? '<span class="m-li-sub">' + esc(it.sub) + '</span>' : '') + '</span></div>';
-      }).join('') });
+      }).join('')) + '</div>' });
   }
 
   function notificationSettings() {
@@ -613,11 +641,11 @@
       ['Weekly schedule summary', true]
     ];
     fullscreen({ title: 'Notifications', back: true, onBack: function () {}, flush: true,
-      body: '<div style="padding:var(--space-4);">' + rows.map(function (r) {
-        return '<label class="m-switch" style="gap:var(--space-3);justify-content:space-between;width:100%;padding:var(--space-2) 0;">' +
-          '<span style="flex:1;font-size:var(--fs-2);">' + esc(r[0]) + '</span>' +
+      body: '<div class="m-stack" style="padding-top:var(--space-4);">' + card(rows.map(function (r) {
+        return '<label class="m-switch" style="gap:var(--space-3);justify-content:space-between;width:100%;padding:var(--space-3) var(--m-card-pad);">' +
+          '<span style="flex:1;font-size:var(--m-fs-body);">' + esc(r[0]) + '</span>' +
           '<input type="checkbox"' + (r[1] ? ' checked' : '') + ' /></label>';
-      }).join('') + '</div>' });
+      }).join('')) + '</div>' });
   }
 
   /* ---- Shell wiring -------------------------------------------------- */
@@ -643,12 +671,12 @@
         var day = S.DAYS[s.day];
         return '<div style="display:flex;gap:var(--space-3);padding:var(--space-3) 0;border-bottom:1px solid var(--border-subtle);">' +
           '<span style="color:var(--' + (s.status === 'unfulfilled' ? 'danger' : 'warning') + '-solid);flex:none;">' + icon('warn', 20) + '</span>' +
-          '<span style="font-size:var(--fs-2);">' + esc(s.position) + ' shift on ' + esc(day.short + ' ' + day.label) +
+          '<span style="font-size:var(--m-fs-body);">' + esc(s.position) + ' shift on ' + esc(day.short + ' ' + day.label) +
           ' is ' + esc(s.status) + '.</span></div>';
       }).join('') : '') +
       '<div style="display:flex;gap:var(--space-3);padding:var(--space-3) 0;">' +
         '<span style="color:var(--info-solid);flex:none;">' + icon('users', 20) + '</span>' +
-        '<span style="font-size:var(--fs-2);">' + S.REVIEWS.length + ' requests are waiting on your review.</span></div>'
+        '<span style="font-size:var(--m-fs-body);">' + S.REVIEWS.length + ' requests are waiting on your review.</span></div>'
     });
   });
 
