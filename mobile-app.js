@@ -40,7 +40,8 @@
     heart: 'heart', comment: 'message-circle', phone: 'phone', mail: 'mail',
     trash: 'trash-2', settings: 'settings', help: 'circle-help', bell: 'bell',
     building: 'building-2', briefcase: 'briefcase', layers: 'layers',
-    logout: 'log-out', edit: 'pencil', filter: 'list-filter', search: 'search'
+    logout: 'log-out', edit: 'pencil', filter: 'list-filter', search: 'search',
+    eye: 'eye', eyeOff: 'eye-off', lock: 'lock'
   };
 
   /* Emits a sized class rather than an inline style: there are ~90 icon
@@ -501,7 +502,10 @@
     fullscreen({
       title: 'Community', back: true, onBack: function () {},
       flush: true,
-      body: '<div class="m-stack" style="padding:var(--m-inset) 0;" id="feedList">' + S.POSTS.map(postCard).join('') + '</div>',
+      /* is-top/is-bottom, not an inline padding shorthand: writing
+         `padding: 20px 0` here overrode .m-stack's horizontal inset and the
+         feed went full-bleed with no side margin at all. */
+      body: '<div class="m-stack is-top is-bottom" id="feedList">' + S.POSTS.map(postCard).join('') + '</div>',
       actions: '<button class="m-btn m-btn-filled state-layer u-grow" id="newPost" >New post</button>',
       wire: function (node) {
         wirePosts(node);

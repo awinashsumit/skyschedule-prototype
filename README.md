@@ -115,6 +115,24 @@ style twice, it belongs in the stylesheet. Two rules worth knowing:
   first and silently drops the second. That bug shipped once and took out
   every full-width row on the More screen.
 
+**Radii come from the shared scale.** Desktop cards are `--radius-4` (8px);
+mobile cards are `--radius-6` (16px) — two steps up the same Radix ramp,
+because a 350px card on a 390px screen needs more curvature than a 1440px
+layout to read as soft rather than square. The first mobile build used 20 /
+14 / 28px, none of which exist on the scale; that was the inconsistency, not
+the fact that mobile is rounder. One step was added rather than more free
+numbers: `--radius-7` at 24px, for full-width mobile surfaces (bottom sheets)
+that have no desktop equivalent.
+
+**Sign in is at `mobile-auth.js`.** Three screens: sign in, redeem an invite,
+reset a password. There is deliberately no open sign-up — skySchedule accounts
+are provisioned by an administrator and reconciled against HRIS on the daily
+sync, so a Create account button would fail for everyone who tapped it. The
+two routes that exist are SSO and an emailed invite, and the screen says so.
+Wrong credentials return one combined message and password reset always
+confirms, so neither can be used to discover which addresses are registered.
+Demo credentials are in `VALID` at the top of the file.
+
 **Icons are Lucide**, loaded from a pinned CDN build and rendered from
 `<i data-lucide="…">` placeholders — no hand-traced path data. The exception is
 the five *filled* tab-bar icons, which are hand-drawn because Lucide ships an

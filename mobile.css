@@ -24,8 +24,19 @@
 
 :root {
   /* Mobile-only radii, from the M3 shape scale */
-  --m-radius-sheet: 28px;
-  --m-radius-fab: 16px;
+  /* Radii come from the shared Radix scale, same as desktop - mobile just
+     sits higher on it, because a 390px surface with a 350px card needs more
+     curvature than a 1440px layout to read as soft rather than square.
+     Desktop cards are --radius-4 (8px); mobile cards are --radius-6 (16px),
+     two steps up on the same ramp.
+
+     The previous values (20 / 14 / 28px) were invented and appear nowhere
+     in the scale, which is exactly the inconsistency between the two apps.
+     One step is added rather than more free numbers: --radius-7 at 24px,
+     for full-width mobile surfaces that have no desktop equivalent. */
+  --radius-7: 24px;
+  --m-radius-sheet: var(--radius-7);
+  --m-radius-fab: var(--radius-6);
   --m-radius-chip: var(--radius-full);
 
   /* ---- Mobile density ------------------------------------------------
@@ -45,8 +56,8 @@
   --m-inset: 20px;          /* the single page gutter */
   --m-gap: 16px;            /* space between sibling cards */
   --m-card-pad: 20px;       /* card interior */
-  --m-radius-card: 20px;    /* was 16px, and 8px on smaller surfaces */
-  --m-radius-inner: 14px;   /* inputs and controls sitting inside a card */
+  --m-radius-card: var(--radius-6);    /* 16px - desktop card + 2 steps */
+  --m-radius-inner: var(--radius-5);   /* 12px - controls inside a card */
   --m-lead: 40px;           /* avatar / leading icon column */
   --m-lead-gap: 14px;
 
@@ -520,7 +531,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .m-badge.is-warning { background: var(--warning-bg); color: var(--warning-text); }
 .m-badge.is-danger  { background: var(--danger-bg);  color: var(--danger-text); }
 .m-badge.is-info    { background: var(--info-bg);    color: var(--info-text); }
-.m-badge.is-neutral { background: var(--gray-3);     color: var(--fg-low); }
+.m-badge.is-neutral { background: var(--gray-4);     color: var(--fg-low); }
 
 .m-divider { height: 1px; background: var(--border-subtle); }
 
@@ -767,7 +778,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 /* Key/value rows on detail screens */
 .m-kv { display: flex; gap: var(--space-4); padding: var(--space-3) var(--m-card-pad); font-size: var(--m-fs-body); line-height: var(--m-lh-body); }
 .m-kv .m-kv-k { flex: none; width: 40%; color: var(--fg-low); }
-.m-kv .m-kv-v { flex: 1; min-width: 0; color: var(--fg-high); }
+/* An email or a URL has no break opportunity, so without this it runs past
+   the card and is clipped by the card's overflow. */
+.m-kv .m-kv-v { flex: 1; min-width: 0; color: var(--fg-high); overflow-wrap: anywhere; }
 .m-kv .m-kv-v.is-empty { color: var(--fg-subtle); }
 
 /* Profile header on the BFM detail screen */
@@ -790,7 +803,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .m-month-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; background: none; border-radius: var(--radius-3); font-size: var(--m-fs-body); color: var(--fg-high); cursor: pointer; }
 .m-month-day.is-out { color: var(--fg-subtle); }
 .m-month-day.is-today { font-weight: var(--weight-bold); color: var(--accent-11); }
-.m-month-day.is-selected { background: var(--accent-9); color: #fff; font-weight: var(--weight-medium); }
+.m-month-day.is-selected { background: var(--accent-9); color: var(--accent-contrast); font-weight: var(--weight-semibold); }
 .m-month-day .m-month-dot { width: 4px; height: 4px; border-radius: var(--radius-full); background: var(--fg-subtle); }
 .m-month-day.is-selected .m-month-dot { background: #fff; }
 .m-month-day .m-month-dot.is-danger { background: var(--danger-solid); }
@@ -808,7 +821,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 /* Compose review summary */
 .m-review-block { padding: var(--space-4) var(--m-inset); }
 .m-review-block .m-review-k { font-size: var(--m-fs-meta); font-weight: var(--weight-semibold); color: var(--fg-subtle); text-transform: uppercase; letter-spacing: .06em; margin-bottom: var(--space-2); }
-.m-review-msg { background: var(--gray-3); border-radius: var(--m-radius-inner); padding: var(--space-4); font-size: var(--m-fs-body); line-height: var(--m-lh-body); white-space: pre-wrap; }
+.m-review-msg { background: var(--color-panel-solid); box-shadow: inset 0 0 0 1px var(--border-subtle); border-radius: var(--m-radius-inner); padding: var(--space-4); font-size: var(--m-fs-body); line-height: var(--m-lh-body); white-space: pre-wrap; }
 
 /* Selectable row used by audience and recipient pickers */
 .m-pick { display: flex; align-items: center; gap: var(--m-lead-gap); width: 100%; min-height: 56px; padding: var(--space-3) var(--m-inset); text-align: left; background: none; border: 0; cursor: pointer; }
@@ -945,4 +958,43 @@ svg.lucide { stroke-width: 1.75; }
 /* Inputs keep their existing inset ring; make it the focus-visible one too. */
 .m-input:focus-visible, .m-select:focus-visible, .m-textarea:focus-visible {
   outline: none; box-shadow: inset 0 0 0 2px var(--accent-11);
+}
+
+/* ============================================================
+   AUTH
+   Sign in, invite redemption and password reset. Sits above the
+   app shell and owns the whole viewport, so the tab bar is not
+   visible until there is a session to browse.
+
+   This is an enterprise product: accounts are provisioned by an
+   administrator and synced from HRIS, so there is no open sign-up.
+   The two real routes in are SSO and an emailed invite, and the
+   screen says so rather than showing a Create account button that
+   would fail for everyone who tapped it.
+   ============================================================ */
+.m-auth {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; flex-direction: column;
+  background: var(--color-panel-solid);
+  padding: calc(var(--m-safe-top) + var(--space-6)) var(--m-inset)
+           calc(var(--m-safe-bottom) + var(--space-5));
+  overflow-y: auto;
+}
+.m-auth-brand { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-5); }
+.m-auth-brand svg { width: 190px; height: auto; }
+.m-auth-lede { margin-top: var(--space-6); }
+.m-auth-lede h1 { font-size: var(--m-fs-head); line-height: var(--m-lh-head); font-weight: var(--weight-bold); color: var(--fg-high); }
+.m-auth-lede p { margin-top: var(--space-2); font-size: var(--m-fs-body); line-height: var(--m-lh-body); color: var(--fg-low); }
+.m-auth-form { display: flex; flex-direction: column; gap: var(--space-4); margin-top: var(--space-6); }
+/* "or" rule between SSO and the credential form */
+.m-auth-or { display: flex; align-items: center; gap: var(--space-4); color: var(--fg-subtle); font-size: var(--m-fs-meta); }
+.m-auth-or::before, .m-auth-or::after { content: ""; flex: 1; height: 1px; background: var(--border-subtle); }
+.m-auth-foot { margin-top: auto; padding-top: var(--space-6); text-align: center; font-size: var(--m-fs-meta); line-height: var(--m-lh-meta); color: var(--fg-low); }
+/* Reveal control inside the password field */
+.m-field.has-affix { position: relative; }
+.m-field.has-affix .m-input { padding-right: 52px; }
+.m-field.has-affix .m-affix {
+  position: absolute; right: 4px; bottom: 0; width: 48px; height: 52px;
+  display: grid; place-content: center; background: none; border: 0;
+  color: var(--fg-low); cursor: pointer; border-radius: var(--radius-full);
 }

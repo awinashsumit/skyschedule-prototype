@@ -102,7 +102,8 @@
         var parentCS = el.parentElement ? getComputedStyle(el.parentElement) : null;
         /* A multi-column grid has one edge per column by definition; only
            the first column is expected to sit on the page grid. */
-        var trailing = el.closest('.m-li-trail,.m-shift-trail,.m-sec-head,.m-day-header,.m-kpis') ||
+        var trailing = el.closest('.m-li-trail,.m-shift-trail,.m-sec-head,.m-day-header,.m-kpis,' +
+            '.m-kv-v,.m-review-msg,.m-alert,.m-reach,#overlayHost,.m-auth') ||
           (parentCS && parentCS.display === 'grid') ||
           (parentCS && /flex/.test(parentCS.display) && /end|right/.test(parentCS.justifyContent));
         if (cs.textAlign !== 'center' && cs.textAlign !== 'right' && !trailing && box.width > 70) {
@@ -170,7 +171,8 @@
 
       /* 7. horizontal overflow of the viewport */
       if (box.right > w.innerWidth + 1 || box.left < -1) {
-        if (cs.position !== 'fixed' && el.offsetParent) {
+        var scroller = el.parentElement && /auto|scroll/.test(getComputedStyle(el.parentElement).overflowX);
+        if (cs.position !== 'fixed' && el.offsetParent && !scroller) {
           found.push(['overflows viewport', (el.className || el.tagName).split(' ')[0] + '  ' + Math.round(box.left) + '..' + Math.round(box.right)]);
         }
       }
@@ -282,12 +284,47 @@
     });
     audit('.m-tabbar', found);
     if (withOverlays && w.APP) {
-      d.querySelector('.m-tab[data-tab="schedule"]').click();
-      var a = d.querySelector('#schedBody [data-assign]');
-      if (a) { a.click(); audit('#overlayHost', found); w.APP.popAll(); }
-      d.querySelector('#fabShift').click(); audit('#overlayHost', found); w.APP.popAll();
+      /* Every overlay, not a sample. The profile screen was outside this
+         list, which is how a cropped email address reached Sumit: the audit
+         had literally never opened the screen it was on. */
+      var routes = [
+        ['schedule', '#schedBody [data-shift]'],        // shift detail
+        ['schedule', '#schedBody [data-assign]'],       // assign sheet
+        ['schedule', '#fabShift'],                      // create shift
+        ['schedule', '#rangeBtn'],                      // month sheet
+        ['schedule', '[data-sheet="schedFilter"]'],     // filter sheet
+        ['bfms',     '#bfmBody [data-bfm]'],            // profile
+        ['bfms',     '#fabBfm'],                        // add a person
+        ['bfms',     '[data-sheet="bfmSort"]'],         // sort sheet
+        ['messages', '#msgBody [data-tpl]'],            // template detail
+        ['messages', '#fabCompose'],                    // compose checklist
+        ['more',     '#moreBody [data-open="profile"]'],
+        ['more',     '#moreBody [data-open="community"]'],
+        ['more',     '#moreBody [data-open="hris"]'],
+        ['more',     '#moreBody [data-open="notifications"]'],
+        ['home',     '[data-sheet="location"]'],
+        ['home',     '[data-sheet="notifications"]'],
+        ['home',     '#homeBody [data-review]']         // request detail
+      ];
+      routes.forEach(function (r) {
+        var tab = d.querySelector('.m-tab[data-tab="' + r[0] + '"]');
+        if (tab) tab.click();
+        var trigger = d.querySelector(r[1]);
+        if (!trigger) { found.push(['audit route missing', r[0] + ' ' + r[1]]); return; }
+        trigger.click();
+        audit('#overlayHost', found);
+        w.APP.popAll();
+      });
+      /* The sent-message pane is behind a segmented switch. */
       d.querySelector('.m-tab[data-tab="messages"]').click();
-      d.querySelector('#fabCompose').click(); audit('#overlayHost', found); w.APP.popAll();
+      var sent = d.querySelector('#msgSeg [data-pane="sent"]');
+      if (sent) {
+        sent.click();
+        audit('.m-view:not([hidden])', found);
+        var msg = d.querySelector('#msgBody [data-msg]');
+        if (msg) { msg.click(); audit('#overlayHost', found); w.APP.popAll(); }
+        d.querySelector('#msgSeg [data-pane="templates"]').click();
+      }
     }
     structural(found);
     d.querySelector('.m-tab[data-tab="home"]').click();
