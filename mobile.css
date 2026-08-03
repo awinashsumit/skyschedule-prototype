@@ -94,25 +94,33 @@
      circular counters and small avatars - nowhere in running text. */
   --m-fs-micro: 11px;
 
-  /* Card separation: canvas tone, not a shadow.
+  /* Card definition: an even hairline. Not a shadow, not canvas tone.
 
-     Three attempts at a card shadow all read as "cut". A diagnostic that
-     replaced it with a 14px opaque halo proved nothing was clipping it -
-     the shadow painted in full on all four sides. The problem is inherent:
-     a drop shadow is directional, so on a near-white canvas it is clearly
-     visible below the card and almost invisible beside it, and that
-     asymmetry reads as an edge sliced off. Tuning blur and spread only
-     moves where the asymmetry sits.
+     A drop shadow is directional. On a near-white canvas it is clearly
+     visible below a card and almost invisible beside it, and that asymmetry
+     is what reads as an edge sliced off - a diagnostic that swapped it for
+     a 14px opaque halo proved nothing was clipping it, the shadow simply
+     was not reaching sideways. Darkening the canvas instead fixed that, but
+     cost the light background Sumit wanted.
 
-     So cards carry no shadow. The canvas moves from gray-2 to gray-3 and
-     cards stay pure white; the tonal step does the grouping, identically on
-     every side, with nothing to clip or cut. iOS Settings is the same
-     pattern, and this More screen is the same problem.
+     A 1px border has neither problem: identical on all four sides, no
+     spread to tune, nothing to clip. It also matches the desktop app, whose
+     .card is a hairline on a light canvas - so the two builds now agree on
+     card treatment as well as on the radius ramp.
 
-     Shadows remain only on things that genuinely float above the page -
-     the FAB, sheets, dialogs, snackbars - where a directional shadow is
-     correct because the object really is lifted. */
-  --m-shadow-card: none;
+     Shadows remain only on things that genuinely float above the page - the
+     FAB, sheets, dialogs, snackbars - where a directional shadow is correct
+     because the object really is lifted off the surface. */
+  /* Two layers, and the first one is the whole point: zero offset, so it
+     radiates equally on all four sides and wraps the corners. The second is
+     offset downward for depth.
+
+     Every earlier attempt used only a downward-offset layer. A shadow like
+     that is strong below the card and nearly absent beside it, and that
+     asymmetry is what reads as an edge sliced off - not clipping, which a
+     14px opaque halo ruled out. An ambient layer at 0 offset fixes it
+     without darkening the canvas or adding a border. */
+  --m-shadow-card: 0 0 12px rgba(16,24,40,.06), 0 6px 16px -6px rgba(16,24,40,.10);
 
   /* Brand amber for the active tab. Points at the token rather than a raw
      hex so dark mode and any future brand change follow automatically.
@@ -173,9 +181,8 @@
    accompanied by the person's name as real text. */
 :root, :root[data-theme="light"] {
   --accent-11: #9c5b00;
-  /* One step darker than the desktop canvas, so a white card separates on
-     tone alone. See --m-shadow-card. */
-  --color-page: var(--gray-3);
+  /* Canvas stays gray-2, the same as desktop. Cards are defined by a
+     hairline rather than tone or shadow - see --m-card-edge. */
   /* 4.68:1 on the gray-3 canvas, 5.33:1 on a white card. The previous
      #717171 cleared 4.5 on white but only reached 4.28 once the canvas
      moved a step darker - a token that passes on one surface can fail on
@@ -570,10 +577,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .m-search {
   display: flex; align-items: center; gap: var(--space-2);
   min-height: 52px; padding: 0 var(--space-4);
-  /* White with a hairline, not a gray fill: the search field sits directly
-     on the canvas, and the canvas is now gray-3. */
-  background: var(--color-panel-solid); box-shadow: inset 0 0 0 1px var(--border-ui);
-  border-radius: var(--radius-full);
+  background: var(--gray-3); border-radius: var(--radius-full);
 }
 .m-search input { flex: 1; border: 0; background: transparent; font-size: 16px; color: var(--fg-high); outline: none; }
 
@@ -821,7 +825,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 /* Compose review summary */
 .m-review-block { padding: var(--space-4) var(--m-inset); }
 .m-review-block .m-review-k { font-size: var(--m-fs-meta); font-weight: var(--weight-semibold); color: var(--fg-subtle); text-transform: uppercase; letter-spacing: .06em; margin-bottom: var(--space-2); }
-.m-review-msg { background: var(--color-panel-solid); box-shadow: inset 0 0 0 1px var(--border-subtle); border-radius: var(--m-radius-inner); padding: var(--space-4); font-size: var(--m-fs-body); line-height: var(--m-lh-body); white-space: pre-wrap; }
+.m-review-msg { background: var(--gray-3); border-radius: var(--m-radius-inner); padding: var(--space-4); font-size: var(--m-fs-body); line-height: var(--m-lh-body); white-space: pre-wrap; }
 
 /* Selectable row used by audience and recipient pickers */
 .m-pick { display: flex; align-items: center; gap: var(--m-lead-gap); width: 100%; min-height: 56px; padding: var(--space-3) var(--m-inset); text-align: left; background: none; border: 0; cursor: pointer; }
