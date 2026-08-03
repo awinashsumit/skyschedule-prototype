@@ -121,6 +121,34 @@ the five *filled* tab-bar icons, which are hand-drawn because Lucide ships an
 outline set only; they live in `mobile.html` and are the only `<svg>` literals
 in the project.
 
+### Auditing the UI
+
+`qa.js` is a standing audit. Load it on `mobile.html` and call `QA(true)`; it
+walks all five tabs plus the overlays and reports every mechanical defect that
+has actually shipped in this project at least once, so none of them can ship
+twice:
+
+```js
+// in the console on mobile.html
+var s = document.createElement('script');
+s.src = '/qa.js';
+document.head.appendChild(s);
+s.onload = () => console.table(QA(true).issues);
+```
+
+It checks: type sizes outside the ramp, inputs under 16px (Safari zooms),
+contrast against the computed background, text off the documented edges,
+clipped labels, touch targets under 44px, shadows whose spread cancels their
+blur so they never wrap the corners, horizontal overflow, duplicate `class`
+attributes, unpainted icon placeholders, and sticky headers outside a
+`.m-group`.
+
+Two things to know if you extend it. It freezes CSS transitions for the
+duration — `getComputedStyle` returns the *interpolated* value mid-transition,
+which made an inactive tab report as brand amber. And it carries an explicit
+list of accepted exceptions, because an audit that re-reports decisions
+already made gets ignored.
+
 **Accessibility is measured, not assumed.** Every screen was audited in the
 browser: all text clears WCAG AA (4.5:1, or 3:1 at large sizes) and every
 interactive target clears 44px. Six of the eight avatar fills were darkened

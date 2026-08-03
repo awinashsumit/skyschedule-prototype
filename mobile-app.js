@@ -111,6 +111,7 @@
       b.addEventListener('click', function () { pop(); });
     });
     if (opts.wire) opts.wire(node);
+    paintIcons();
     return node;
   }
   function pop() {
@@ -219,6 +220,10 @@
     if (VIEWS.indexOf(tab) === -1) return;
     current = tab;
     VIEWS.forEach(function (v) { $('#v-' + v).hidden = (v !== tab); });
+    /* Paint synchronously here as well as from the observer. The observer
+       fires on a microtask, which is one frame of blank squares on a tab
+       switch; this closes that gap and the observer stays as the backstop
+       for markup injected outside a render. */
     $$('.m-tab').forEach(function (t) {
       var on = t.getAttribute('data-tab') === tab;
       t.classList.toggle('is-active', on);
@@ -231,11 +236,12 @@
   var renderers = {};
   function register(tab, fn) { renderers[tab] = fn; }
   function render(tab) {
-    if (tab) { renderers[tab] && renderers[tab](); return; }
+    if (tab) { renderers[tab] && renderers[tab](); paintIcons(); return; }
     /* No argument: refresh whatever is on screen plus the tab badges, so a
        change made inside a flow shows up the moment the flow closes. */
     renderers[current] && renderers[current]();
     badges();
+    paintIcons();
   }
 
   function badges() {
@@ -667,7 +673,7 @@
     sheet({ title: 'Notifications',
       body: (ex.length ? ex.slice(0, 3).map(function (s) {
         var day = S.DAYS[s.day];
-        return '<div style="display:flex;gap:var(--space-3);padding:var(--space-3) 0;border-bottom:1px solid var(--border-subtle);">' +
+        return '<div style="display:flex;gap:var(--space-3);padding:var(--space-3) 0;">' +
           '<span style="color:var(--' + (s.status === 'unfulfilled' ? 'danger' : 'warning') + '-solid);flex:none;">' + icon('warn', 20) + '</span>' +
           '<span class="u-body">' + esc(s.position) + ' shift on ' + esc(day.short + ' ' + day.label) +
           ' is ' + esc(s.status) + '.</span></div>';

@@ -293,7 +293,7 @@
       var c = checks();
       var done = c.filter(function (x) { return x.ok; }).length;
       var pct = Math.round((done / c.length) * 100);
-      return '<div style="padding:var(--space-4) var(--space-4) var(--space-2);">' +
+      return '<div style="padding:var(--m-inset) var(--m-inset) var(--space-2);">' +
           '<div style="display:flex;justify-content:space-between;font-size:var(--m-fs-body);font-weight:var(--weight-medium);margin-bottom:var(--space-2);">' +
             '<span>' + done + ' of ' + c.length + ' ready</span>' +
             (m.templateName ? '<span style="color:var(--fg-low);font-weight:var(--weight-regular);">From ' + esc(m.templateName) + '</span>' : '') +
@@ -419,7 +419,7 @@
                 : k === 'sms' ? r.sms + ' of ' + r.total + ' reachable' + (r.smsWhy.length ? ' · ' + r.smsWhy.join(', ') : '')
                 : k === 'email' ? r.email + ' of ' + r.total + ' reachable'
                 : r.push + ' of ' + r.total + ' reachable' + (r.pushWhy.length ? ' · ' + r.pushWhy.join(', ') : '');
-              return '<label class="m-switch" style="gap:var(--space-3);justify-content:space-between;width:100%;padding:var(--space-3) 0;border-bottom:1px solid var(--border-subtle);">' +
+              return '<label class="m-switch is-row" style="padding:var(--space-3) 0;">' +
                 '<span class="u-grow"><span style="display:block;font-size:var(--m-fs-body);font-weight:var(--weight-medium);">' + label + '</span>' +
                 '<span class="u-meta-low">' + esc(sub) + '</span></span>' +
                 '<input type="checkbox" data-ch="' + k + '"' + (m.channels[k] ? ' checked' : '') + ' /></label>';

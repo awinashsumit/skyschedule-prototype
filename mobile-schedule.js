@@ -326,7 +326,7 @@
         pickRow('location', 'Location', draft.location) +
         pickRow('assign', 'Assign to', who) +
         (editing ? '' :
-          '<div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--m-inset);border-bottom:1px solid var(--border-subtle);">' +
+          '<div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--m-inset);">' +
             '<span class="u-grow u-body">How many</span>' +
             '<div class="m-stepper"><button data-qty="-1" class="state-layer" aria-label="Fewer">' + icon('minusOnly', 20) +
             '</button><span class="m-stepper-value" id="qtyVal">' + draft.qty + '</span>' +

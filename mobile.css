@@ -58,15 +58,25 @@
      lands on the 4px baseline grid.
 
        13/20  meta      captions, timestamps, counts
-       16/24  body      the default; also the iOS no-zoom floor for inputs
-       20/28  title     card titles, section headings, app bar titles
-       24/32  head      screen titles
-       32/40  hero      the one big number on a screen                  */
+       15/20  body      the default, and every list row title
+       18/24  title     card titles, section headings, app bar titles
+       22/28  head      screen titles and sheet titles
+       26/32  hero      the one big number on a screen
+
+     Anchored at 15, not 16. The earlier 1.25-from-16 ramp put 20px bold on
+     every section heading and 16px on every list row, which at 390px made
+     ordinary lists read as headlines - loud rather than dense. 15px is
+     still above the 14px comfort floor for body text.
+
+     The bottom step is 13 rather than the ratio's 12.5, rounded up because
+     12px metadata at arm's length is the readability problem this rebuild
+     set out to fix. That is the only deviation from the ratio. Inputs are
+     the other exception and are pinned at 16px - see .m-input. */
   --m-fs-meta: 13px;  --m-lh-meta: 20px;
-  --m-fs-body: 16px;  --m-lh-body: 24px;
-  --m-fs-title: 20px; --m-lh-title: 28px;
-  --m-fs-head: 24px;  --m-lh-head: 32px;
-  --m-fs-hero: 32px;  --m-lh-hero: 40px;
+  --m-fs-body: 15px;  --m-lh-body: 20px;
+  --m-fs-title: 18px; --m-lh-title: 24px;
+  --m-fs-head: 22px;  --m-lh-head: 28px;
+  --m-fs-hero: 26px;  --m-lh-hero: 32px;
   /* One documented exception. 13px will not fit inside an 18px counter
      circle or a 32px avatar, and growing those to suit the ramp would make
      a notification badge louder than the icon it sits on. Used ONLY inside
@@ -77,7 +87,12 @@
      1px ring, which on a white card over a near-white canvas reads as a
      border on some cards and vanishes on others. A ringless shadow lifts
      every card identically. */
-  --m-shadow-card: 0 1px 2px rgba(0,0,0,.05), 0 6px 16px -6px rgba(0,0,0,.10);
+  /* Spread must stay well under half the blur or the shadow never reaches
+     around the sides. The previous value (16px blur, -6px spread) extended
+     only 2px horizontally, so it pooled under the card and stopped dead at
+     the corners - which reads as a shadow that has been cut off. These two
+     layers extend ~8px on every side and wrap the radius properly. */
+  --m-shadow-card: 0 1px 2px rgba(16,24,40,.04), 0 4px 16px rgba(16,24,40,.07);
 
   /* Brand amber for the active tab. Points at the token rather than a raw
      hex so dark mode and any future brand change follow automatically.
@@ -222,7 +237,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .m-appbar .m-appbar-title {
   flex: 1; min-width: 0;
   font-size: var(--m-fs-title); line-height: var(--m-lh-title);
-  font-weight: var(--weight-bold); color: var(--fg-high);
+  font-weight: var(--weight-semibold); color: var(--fg-high);
   padding-left: var(--space-3);   /* 8px bar padding + 12 = the 20px inset */
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
@@ -368,7 +383,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   transition: background-color var(--m-dur-short) var(--m-ease);
 }
 .m-btn .m-btn-icon { width: 18px; height: 18px; flex: none; }
-.m-btn:disabled { background: var(--gray-3); color: var(--fg-disabled); pointer-events: none; }
+/* WCAG exempts disabled controls, but "Review" at 1.68:1 was genuinely
+   unreadable rather than merely muted. gray-10 keeps it clearly inactive
+   while staying legible. */
+.m-btn:disabled { background: var(--gray-3); color: var(--gray-10); pointer-events: none; }
 .m-btn-filled  { background: var(--accent-9); color: var(--accent-contrast); }
 .m-btn-tonal   { background: var(--accent-3); color: var(--accent-11); }
 .m-btn-outlined{ background: transparent; color: var(--fg-high); box-shadow: inset 0 0 0 1px var(--border-ui); }
@@ -401,7 +419,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .m-list { background: var(--color-panel-solid); }
 .m-list-item {
   display: flex; align-items: center; gap: var(--m-lead-gap);
-  min-height: 64px; padding: var(--space-3) var(--m-card-pad);
+  min-height: 56px; padding: var(--space-3) var(--m-card-pad);
   color: var(--fg-high);
 }
 .m-list-item .m-li-lead { flex: none; display: flex; align-items: center; justify-content: center; color: var(--fg-low); }
@@ -455,11 +473,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 /* A card whose children are rows rather than prose. Rows are divided only
    INSIDE a card, where a divider means "same group, next item". */
 .m-card.is-rows { padding: 0; overflow: hidden; }
-.m-card.is-rows > * + * { border-top: 1px solid var(--border-subtle); }
-/* ...except between shifts. Each shift already carries a full-height status
-   rail, so a rule between them is a third separator doing the job of the
-   first two. Space plus the rail is enough. */
-.m-card.is-rows > .m-shift + .m-shift { border-top: 0; }
+/* No dividers between rows. The card edge already groups them and the row
+   padding already separates them; a rule is a third device doing the job of
+   the first two, and it is what made these lists read as tables. One rule
+   across the whole app: space separates, never lines. */
 .m-chip {
   position: relative;
   display: inline-flex; align-items: center; gap: var(--space-1);
@@ -516,7 +533,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   background: var(--color-surface); color: var(--fg-high);
   border-radius: var(--m-radius-inner);
   box-shadow: inset 0 0 0 1px var(--border-ui);
-  font-family: var(--font-base); font-size: var(--m-fs-body);   /* 16px stops iOS zoom on focus */
+  font-family: var(--font-base);
+  /* Hard floor, not a scale step: Safari zooms the page when a focused input
+     is under 16px. This is the one place the ramp does not apply. */
+  font-size: 16px;
 }
 .m-input:focus, .m-select:focus, .m-textarea:focus { outline: none; box-shadow: inset 0 0 0 2px var(--accent-8); }
 .m-textarea { min-height: 96px; resize: vertical; }
@@ -525,7 +545,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   min-height: 52px; padding: 0 var(--space-4);
   background: var(--gray-3); border-radius: var(--radius-full);
 }
-.m-search input { flex: 1; border: 0; background: transparent; font-size: var(--m-fs-body); color: var(--fg-high); outline: none; }
+.m-search input { flex: 1; border: 0; background: transparent; font-size: 16px; color: var(--fg-high); outline: none; }
 
 .m-switch { position: relative; display: inline-flex; align-items: center; min-height: var(--m-touch); }
 .m-switch input { appearance: none; width: 52px; height: 32px; border-radius: var(--radius-full); background: var(--gray-6); position: relative; transition: background-color var(--m-dur-short) var(--m-ease); }
@@ -702,7 +722,6 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .m-attn-head { display: flex; align-items: center; gap: var(--space-3); padding: var(--m-card-pad) var(--m-card-pad) var(--space-3); }
 .m-attn-head .m-attn-title { flex: 1; font-size: var(--m-fs-title); line-height: var(--m-lh-title); font-weight: var(--weight-bold); }
 .m-attn-row { display: flex; align-items: center; gap: var(--m-lead-gap); width: 100%; padding: var(--space-3) var(--m-card-pad); text-align: left; }
-.m-attn-row + .m-attn-row { border-top: 1px solid var(--border-subtle); }
 /* Severity reads from a tinted disc rather than an 8px dot: at arm's length
    a small dot is not a signal, it is a speck. */
 .m-attn-row .m-attn-dot { flex: none; width: var(--m-lead); height: var(--m-lead); border-radius: var(--radius-full); display: grid; place-content: center; }
@@ -714,7 +733,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .m-attn-row .m-attn-text { flex: 1; min-width: 0; }
 .m-attn-row .m-attn-what { display: block; font-size: var(--m-fs-body); line-height: var(--m-lh-body); font-weight: var(--weight-semibold); color: var(--fg-high); }
 .m-attn-row .m-attn-when { display: block; font-size: var(--m-fs-meta); line-height: var(--m-lh-meta); color: var(--fg-low); }
-.m-attn-foot { padding: var(--space-2) var(--space-3) var(--space-3); border-top: 1px solid var(--border-subtle); }
+.m-attn-foot { padding: var(--space-1) var(--space-3) var(--space-3); }
 
 /* Community post */
 .m-post { padding: var(--m-card-pad); background: var(--color-panel-solid); border-radius: var(--m-radius-card); box-shadow: var(--m-shadow-card); }
@@ -729,7 +748,6 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 /* Key/value rows on detail screens */
 .m-kv { display: flex; gap: var(--space-4); padding: var(--space-3) var(--m-card-pad); font-size: var(--m-fs-body); line-height: var(--m-lh-body); }
-.m-kv + .m-kv { border-top: 1px solid var(--border-subtle); }
 .m-kv .m-kv-k { flex: none; width: 40%; color: var(--fg-low); }
 .m-kv .m-kv-v { flex: 1; min-width: 0; color: var(--fg-high); }
 .m-kv .m-kv-v.is-empty { color: var(--fg-subtle); }
@@ -771,13 +789,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 /* Compose review summary */
 .m-review-block { padding: var(--space-4) var(--m-inset); }
-.m-review-block + .m-review-block { border-top: 1px solid var(--border-subtle); }
 .m-review-block .m-review-k { font-size: var(--m-fs-meta); font-weight: var(--weight-semibold); color: var(--fg-subtle); text-transform: uppercase; letter-spacing: .06em; margin-bottom: var(--space-2); }
 .m-review-msg { background: var(--gray-3); border-radius: var(--m-radius-inner); padding: var(--space-4); font-size: var(--m-fs-body); line-height: var(--m-lh-body); white-space: pre-wrap; }
 
 /* Selectable row used by audience and recipient pickers */
-.m-pick { display: flex; align-items: center; gap: var(--m-lead-gap); width: 100%; min-height: 64px; padding: var(--space-3) var(--m-inset); text-align: left; background: none; border: 0; cursor: pointer; }
-.m-pick + .m-pick { border-top: 1px solid var(--border-subtle); }
+.m-pick { display: flex; align-items: center; gap: var(--m-lead-gap); width: 100%; min-height: 56px; padding: var(--space-3) var(--m-inset); text-align: left; background: none; border: 0; cursor: pointer; }
 .m-pick .m-pick-text { flex: 1; min-width: 0; }
 .m-pick .m-pick-title { display: block; font-size: var(--m-fs-body); line-height: var(--m-lh-body); font-weight: var(--weight-medium); color: var(--fg-high); }
 .m-pick .m-pick-sub { display: block; font-size: var(--m-fs-meta); line-height: var(--m-lh-meta); color: var(--fg-low); }
