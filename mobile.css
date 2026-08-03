@@ -897,3 +897,34 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    with Inter's weight; set once here rather than passing an override
    through every icon() call. */
 svg.lucide { stroke-width: 1.75; }
+
+/* ============================================================
+   FOCUS
+   There was no focus style at all, so every interactive element
+   fell back to the UA's blue box - visible on the tab bar after a
+   tap, and belonging to no design system. Replaced globally.
+
+   :focus-visible rather than :focus, so the ring appears for
+   keyboard and assistive navigation but not after a touch. Colour
+   is accent-11 (5.37:1 on white) rather than the accent-8 the
+   token suggests, because a focus indicator has to clear 3:1
+   against what surrounds it to do its job.
+   ============================================================ */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--accent-11);
+  outline-offset: 2px;
+  border-radius: var(--radius-3);
+}
+/* Inset on full-bleed targets, where an outset ring would be clipped by the
+   container or collide with the neighbouring row. */
+.m-tab:focus-visible,
+.m-list-item:focus-visible,
+.m-pick:focus-visible,
+.m-ready-row:focus-visible,
+.m-attn-row:focus-visible,
+.m-shift:focus-visible { outline-offset: -3px; }
+/* Inputs keep their existing inset ring; make it the focus-visible one too. */
+.m-input:focus-visible, .m-select:focus-visible, .m-textarea:focus-visible {
+  outline: none; box-shadow: inset 0 0 0 2px var(--accent-11);
+}

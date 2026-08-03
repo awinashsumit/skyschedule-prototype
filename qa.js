@@ -175,6 +175,42 @@
         return i.getAttribute('data-lucide');
       }).join(', ')]);
     }
+    /* 11. Focus. Every interactive element must have an authored focus
+       ring; without one the browser paints its own blue box, which is what
+       shipped on the tab bar.
+
+       This cannot be tested by calling .focus() - :focus-visible only
+       matches keyboard focus, so a programmatic focus always reports no
+       outline and the check would flag everything. Instead, read the
+       :focus-visible rules out of the stylesheet, strip the pseudo, and
+       confirm each interactive element is matched by at least one. */
+    var focusSelectors = [];
+    Array.prototype.forEach.call(d.styleSheets, function (sheet) {
+      var rules;
+      try { rules = sheet.cssRules; } catch (e) { return; }   // cross-origin
+      Array.prototype.forEach.call(rules || [], function (r) {
+        if (r.selectorText && r.selectorText.indexOf(':focus-visible') > -1) {
+          r.selectorText.split(',').forEach(function (sel) {
+            if (sel.indexOf(':focus-visible') > -1) {
+              focusSelectors.push(sel.replace(/:focus-visible/g, '').trim() || '*');
+            }
+          });
+        }
+      });
+    });
+    if (!focusSelectors.length) {
+      found.push(['no focus styles authored at all', 'every control falls back to the UA ring']);
+    } else {
+      d.querySelectorAll(TOUCHABLE).forEach(function (el) {
+        var covered = focusSelectors.some(function (sel) {
+          try { return sel === '*' || el.matches(sel); } catch (e) { return false; }
+        });
+        if (!covered) {
+          found.push(['no focus ring', (el.className || el.tagName).split(' ')[0]]);
+        }
+      });
+    }
+
     /* 10. a sticky header outside a .m-group pins forever and stacks up */
     d.querySelectorAll('.m-sticky').forEach(function (el) {
       if (!el.closest('.m-group')) found.push(['sticky header without .m-group', el.textContent.trim().slice(0, 24)]);
@@ -194,6 +230,28 @@
     return function () { st.remove(); };
   }
 
+  /* Content must be reachable: scroll a pane to its end and check the last
+     row clears the fixed tab bar. Run per screen, because a padding value
+     that is short by a few pixels leaves one row permanently half-covered
+     and only on the screen that has the extra chrome. */
+  function reachable(found) {
+    var bar = d.querySelector('.m-tabbar');
+    var barTop = bar ? bar.getBoundingClientRect().top : Infinity;
+    d.querySelectorAll('.m-view:not([hidden]) .m-body').forEach(function (body) {
+      var prev = body.scrollTop;
+      body.scrollTop = body.scrollHeight;
+      var last = body.children[body.children.length - 1];
+      if (last) {
+        var r = last.getBoundingClientRect();
+        if (r.bottom > barTop + 1) {
+          found.push(['content trapped under the tab bar',
+            (body.id || '') + '  last row ends ' + Math.round(r.bottom - barTop) + 'px into the bar']);
+        }
+      }
+      body.scrollTop = prev;
+    });
+  }
+
   w.QA = function (withOverlays) {
     var found = [];
     var thaw = freeze();
@@ -201,6 +259,7 @@
       var tab = d.querySelector('.m-tab[data-tab="' + t + '"]');
       if (tab) tab.click();
       audit('.m-view:not([hidden])', found);
+      reachable(found);
     });
     audit('.m-tabbar', found);
     if (withOverlays && w.APP) {
