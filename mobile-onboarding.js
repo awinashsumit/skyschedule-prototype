@@ -98,7 +98,9 @@
     el.setAttribute('role', 'status');
     el.setAttribute('aria-label', 'skySchedule, loading');
     el.innerHTML = A.logo() +
-      '<div class="m-splash-load"><i></i><i></i><i></i></div>';
+      '<div class="m-splash-load"><i></i><i></i><i></i></div>' +
+      '<div class="m-splash-foot">powered by ' +
+        '<span class="m-splash-mark">S</span><b>skypoint</b></div>';
     d.body.appendChild(el);
 
     /* Tappable, and it also self-advances. A splash that can only be waited

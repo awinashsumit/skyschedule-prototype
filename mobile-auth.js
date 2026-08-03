@@ -63,9 +63,10 @@
   /* ---- Sign in ---------------------------------------------------- */
   function signIn() {
     var el = screen(
-      '<div class="m-auth-brand">' + LOGO + '</div>' +
-      '<div class="m-auth-lede"><h1>Sign in</h1>' +
-        '<p>Use your Skypoint account to see your schedule and your team.</p></div>' +
+      '<div class="m-auth-head">' + LOGO +
+        '<h1>Welcome back</h1>' +
+        '<p>Sign in to see your schedule and your team.</p></div>' +
+      '<div class="m-auth-sheet">' +
       '<div class="m-auth-form">' +
         '<button class="m-btn m-btn-outlined state-layer u-full" id="sso">' +
           '<svg class="m-ico is-18" viewBox="0 0 20 20" aria-hidden="true">' +
@@ -85,7 +86,8 @@
         '<button class="m-btn m-btn-text state-layer u-full" id="forgot">Forgot your password?</button>' +
       '</div>' +
       '<div class="m-auth-foot">skySchedule accounts are created by your administrator.<br>' +
-        'Been invited? <button class="m-link" id="invite">Redeem your invite</button></div>',
+        'Been invited? <button class="m-link" id="invite">Redeem your invite</button></div>' +
+      '</div>',
       function (root) {
         var pass = $('#authPass', root);
         $('#reveal', root).addEventListener('click', function () {
@@ -130,9 +132,10 @@
   /* ---- Redeem an invite ------------------------------------------- */
   function redeem() {
     screen(
-      '<div class="m-auth-brand">' + LOGO + '</div>' +
-      '<div class="m-auth-lede"><h1>Redeem your invite</h1>' +
+      '<div class="m-auth-head">' + LOGO +
+        '<h1>Redeem your invite</h1>' +
         '<p>Enter the code from your invitation email, then choose a password.</p></div>' +
+      '<div class="m-auth-sheet">' +
       '<div class="m-auth-form">' +
         field({ id: 'invCode', label: 'Invite code', type: 'text', autocomplete: 'one-time-code',
                 placeholder: 'e.g. SKY-4821-QT' }) +
@@ -142,7 +145,8 @@
         '<button class="m-btn m-btn-text state-layer u-full" id="backToSignIn">Back to sign in</button>' +
       '</div>' +
       '<div class="m-auth-foot">Your code expires 7 days after it is sent. ' +
-        'If it has lapsed, ask your administrator to send a new one.</div>',
+        'If it has lapsed, ask your administrator to send a new one.</div>' +
+      '</div>',
       function (root) {
         $('#backToSignIn', root).addEventListener('click', function () { root.remove(); signIn(); });
         $('#doRedeem', root).addEventListener('click', function () {
@@ -159,14 +163,16 @@
   /* ---- Reset a password -------------------------------------------- */
   function reset() {
     screen(
-      '<div class="m-auth-brand">' + LOGO + '</div>' +
-      '<div class="m-auth-lede"><h1>Reset your password</h1>' +
+      '<div class="m-auth-head">' + LOGO +
+        '<h1>Reset your password</h1>' +
         '<p>We will email you a link. It is valid for one hour.</p></div>' +
+      '<div class="m-auth-sheet">' +
       '<div class="m-auth-form">' +
         field({ id: 'resetEmail', label: 'Work email', type: 'email', mode: 'email',
                 autocomplete: 'username', placeholder: 'you@skypointcloud.com' }) +
         '<button class="m-btn m-btn-filled state-layer u-full" id="doReset">Send the link</button>' +
         '<button class="m-btn m-btn-text state-layer u-full" id="backToSignIn2">Back to sign in</button>' +
+      '</div>' +
       '</div>',
       function (root) {
         $('#backToSignIn2', root).addEventListener('click', function () { root.remove(); signIn(); });
