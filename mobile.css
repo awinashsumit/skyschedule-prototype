@@ -34,6 +34,17 @@
      Sumit's direction; swap to #9c5b00 (5.37:1) if that is revisited. */
   --m-brand-ink: var(--accent-9);
 
+  /* Text-safe amber. tokens.css sets --accent-11 to the same #ffb31c as
+     --accent-9, which is a fill colour: 1.79:1 on white and 1.63:1 on the
+     tonal button's own background, so every amber label - text buttons,
+     tonal buttons, today's date, the selected tick - is effectively
+     unreadable. Radix's own amber-11 is a dark amber for exactly this
+     reason. Overridden here rather than in tokens.css so the desktop build
+     is untouched, and --accent-9 is left alone so the tab bar stays the
+     brand amber Sumit picked. #9c5b00 is 5.37:1 on white, 4.90:1 on
+     --accent-3. Dark mode is left alone: its --accent-11 is already a
+     light amber, which is the correct direction on a dark surface. */
+
   /* Minimum comfortable touch target. Desktop used 26-32px controls;
      both iOS and Android want 44-48px. */
   --m-touch: 44px;
@@ -52,6 +63,36 @@
   --m-ease: cubic-bezier(0.2, 0, 0, 1);
   --m-dur-short: 140ms;
   --m-dur-medium: 240ms;
+}
+
+/* Must match tokens.css's own selector - :root alone loses to
+   :root[data-theme="light"] and the override silently does nothing.
+
+   The rest of this block fixes contrast failures measured against the
+   rendered screens, not eyeballed. Phones get used in daylight and at
+   arm's length, so the 4.5:1 floor matters more here than on a monitor.
+   Every value is the smallest darkening that clears the threshold, so
+   the palette still reads as the same colour.
+
+     --fg-subtle   3.79:1 on white, 3.60:1 on panel  ->  4.88 / 4.64
+     --success-text 4.21:1 on its own badge bg       ->  5.56
+     --info-text    4.25:1                           ->  5.30
+     --warning-text 4.21:1                           ->  5.62
+     --danger-text  4.37:1                           ->  5.23
+     --danger-solid white-on-red tab badge 3.91:1    ->  5.57
+
+   Not changed: the active tab's amber, which is 1.79:1 and stays that way
+   at Sumit's explicit direction (brand fidelity over contrast), and the
+   avatar initials, which sit on the shared chart palette and are always
+   accompanied by the person's name as real text. */
+:root, :root[data-theme="light"] {
+  --accent-11: #9c5b00;
+  --fg-subtle: #717171;
+  --success-text: #1b6e49;
+  --info-text: #0c65b4;
+  --warning-text: #8f5300;
+  --danger-text: #b8272c;
+  --danger-solid: #c62a2f;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -100,6 +141,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   overflow-y: auto;
 }
 .m-body.is-flush { padding-left: 0; padding-right: 0; }
+/* Screens with a FAB need the scroll region to end above it, otherwise the
+   last row sits permanently under the button and its trailing action - an
+   Assign button, a chevron - can never be tapped. FAB is 56px tall and
+   already offset by space-4 from the tab bar. */
+.m-body.has-fab { padding-bottom: calc(var(--m-tabbar-h) + var(--m-safe-bottom) + 56px + var(--space-6)); }
 .m-section { padding: var(--space-4); }
 
 /* ============================================================
@@ -495,3 +541,146 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* ============================================================
+   SCREEN LAYER
+   Everything above is the component vocabulary. What follows is
+   the small amount of glue the five screens need on top of it.
+   ============================================================ */
+
+/* Views are siblings inside .m-app. Only one is visible; the rest carry
+   [hidden]. Each owns its own app bar and scroll region, which is why the
+   view - not .m-app - is the flex column. */
+.m-view { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+
+/* Avatar colours as classes so a person keeps one colour across every
+   screen without repeating an inline style at each call site. */
+.av-c1 { background: var(--chart-1); } .av-c2 { background: var(--chart-2); }
+.av-c3 { background: var(--chart-3); } .av-c4 { background: var(--chart-4); }
+.av-c5 { background: var(--chart-5); } .av-c6 { background: var(--chart-6); }
+.av-c7 { background: var(--chart-7); } .av-c8 { background: var(--chart-8); }
+
+/* Section heading with an optional trailing link. Used on Home to head
+   each preview block and on detail screens to head each group. */
+.m-sec-head {
+  display: flex; align-items: baseline; gap: var(--space-2);
+  padding: var(--space-5) var(--space-4) var(--space-2);
+}
+.m-sec-head h2 { flex: 1; font-size: var(--fs-4); font-weight: var(--weight-bold); color: var(--fg-high); }
+.m-sec-head .m-sec-link {
+  flex: none; font-size: var(--fs-2); font-weight: var(--weight-medium);
+  color: var(--fg-low); background: none; border: 0; cursor: pointer;
+  /* The label is small, so the hit area is grown past the text rather
+     than padding the text itself and pushing the heading off baseline. */
+  position: relative; padding: var(--space-1) 0;
+}
+.m-sec-head .m-sec-link::before { content: ""; position: absolute; inset: -10px -8px; }
+.m-sec-head .m-sec-sub { flex: none; font-size: var(--fs-1); color: var(--fg-subtle); }
+
+/* Greeting block at the top of Home */
+.m-greet { padding: var(--space-2) var(--space-4) var(--space-4); }
+.m-greet .m-greet-hi { font-size: var(--fs-2); color: var(--fg-low); }
+.m-greet .m-greet-name { font-size: var(--fs-7); line-height: var(--lh-7); font-weight: var(--weight-bold); color: var(--fg-high); }
+.m-greet .m-greet-where { font-size: var(--fs-2); color: var(--fg-low); margin-top: 2px; }
+
+/* KPI tiles. Two per row rather than a horizontal scroller: four numbers
+   fit a phone width at 2x2, and a scroller would hide half of them behind
+   a gesture the user has no reason to expect. */
+.m-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); padding: 0 var(--space-4); }
+.m-kpi {
+  background: var(--color-panel-solid); border-radius: var(--radius-4);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  padding: var(--space-3) var(--space-4); display: flex; flex-direction: column; gap: 2px;
+}
+.m-kpi .m-kpi-val { font-size: var(--fs-7); line-height: 1.1; font-weight: var(--weight-bold); color: var(--fg-high); font-variant-numeric: tabular-nums; }
+.m-kpi .m-kpi-label { font-size: var(--fs-1); color: var(--fg-low); }
+.m-kpi .m-kpi-delta { font-size: var(--fs-1); font-weight: var(--weight-medium); }
+.m-kpi .m-kpi-delta.is-up { color: var(--success-text); }
+.m-kpi .m-kpi-delta.is-down { color: var(--danger-text); }
+.m-kpi.is-alert { box-shadow: inset 0 0 0 1px var(--danger-border); }
+.m-kpi.is-alert .m-kpi-val { color: var(--danger-text); }
+
+/* Attention card: the one thing on Home that is a queue rather than a
+   readout. Amber is deliberately absent - the severity lives in the rows. */
+.m-attn { margin: 0 var(--space-4); background: var(--color-panel-solid); border-radius: var(--radius-4); box-shadow: inset 0 0 0 1px var(--border-subtle); overflow: hidden; }
+.m-attn-head { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); }
+.m-attn-head .m-attn-title { flex: 1; font-size: var(--fs-3); font-weight: var(--weight-bold); }
+.m-attn-row { display: flex; align-items: center; gap: var(--space-3); width: 100%; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); text-align: left; }
+.m-attn-row:last-child { border-bottom: 0; }
+.m-attn-row .m-attn-dot { flex: none; width: 8px; height: 8px; border-radius: var(--radius-full); }
+.m-attn-row .m-attn-dot.is-danger { background: var(--danger-solid); }
+.m-attn-row .m-attn-dot.is-warning { background: var(--warning-solid); }
+.m-attn-row .m-attn-text { flex: 1; min-width: 0; }
+.m-attn-row .m-attn-what { display: block; font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-high); }
+.m-attn-row .m-attn-when { display: block; font-size: var(--fs-1); color: var(--fg-low); }
+.m-attn-foot { padding: var(--space-2) var(--space-4) var(--space-3); }
+
+/* Community post */
+.m-post { padding: var(--space-4); border-bottom: 1px solid var(--border-subtle); }
+.m-post-head { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2); }
+.m-post-head .m-post-who { flex: 1; min-width: 0; }
+.m-post-head .m-post-name { display: block; font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-high); }
+.m-post-head .m-post-meta { display: block; font-size: var(--fs-1); color: var(--fg-low); }
+.m-post-body { font-size: var(--fs-2); line-height: var(--lh-3); color: var(--fg-high); }
+.m-post-actions { display: flex; gap: var(--space-1); margin-top: var(--space-2); }
+.m-post-act { display: inline-flex; align-items: center; gap: 6px; height: var(--m-touch); padding: 0 var(--space-2); margin-left: calc(var(--space-2) * -1); font-size: var(--fs-1); color: var(--fg-low); background: none; border: 0; border-radius: var(--radius-3); cursor: pointer; }
+.m-post-act.is-on { color: var(--accent-11); }
+
+/* Key/value rows on detail screens */
+.m-kv { display: flex; gap: var(--space-4); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); font-size: var(--fs-2); }
+.m-kv .m-kv-k { flex: none; width: 40%; color: var(--fg-low); }
+.m-kv .m-kv-v { flex: 1; min-width: 0; color: var(--fg-high); }
+.m-kv .m-kv-v.is-empty { color: var(--fg-subtle); }
+
+/* Profile header on the BFM detail screen */
+.m-profile { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-1); padding: var(--space-5) var(--space-4) var(--space-4); }
+.m-profile .m-avatar { width: 72px; height: 72px; font-size: var(--fs-6); }
+.m-profile .m-profile-name { font-size: var(--fs-6); font-weight: var(--weight-bold); margin-top: var(--space-2); }
+.m-profile .m-profile-role { font-size: var(--fs-2); color: var(--fg-low); }
+.m-profile-actions { display: flex; gap: var(--space-2); margin-top: var(--space-3); }
+
+/* Inline alert banner, for certification expiry and suspension notes */
+.m-alert { display: flex; gap: var(--space-3); margin: 0 var(--space-4) var(--space-3); padding: var(--space-3); border-radius: var(--radius-3); font-size: var(--fs-1); line-height: var(--lh-2); }
+.m-alert.is-warning { background: var(--warning-bg); color: var(--warning-text); }
+.m-alert.is-danger { background: var(--danger-bg); color: var(--danger-text); }
+.m-alert.is-info { background: var(--info-bg); color: var(--info-text); }
+.m-alert svg { flex: none; }
+
+/* Month grid inside the date sheet */
+.m-month { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.m-month .m-month-dow { text-align: center; font-size: var(--fs-1); color: var(--fg-subtle); padding-bottom: var(--space-2); }
+.m-month-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; background: none; border-radius: var(--radius-3); font-size: var(--fs-2); color: var(--fg-high); cursor: pointer; }
+.m-month-day.is-out { color: var(--fg-subtle); }
+.m-month-day.is-today { font-weight: var(--weight-bold); color: var(--accent-11); }
+.m-month-day.is-selected { background: var(--accent-9); color: #fff; font-weight: var(--weight-medium); }
+.m-month-day .m-month-dot { width: 4px; height: 4px; border-radius: var(--radius-full); background: var(--fg-subtle); }
+.m-month-day.is-selected .m-month-dot { background: #fff; }
+.m-month-day .m-month-dot.is-danger { background: var(--danger-solid); }
+
+/* Sticky sub-header inside a scrolling body (agenda day headers, list
+   group labels). Offset is 0 because .m-body is the scroll container.
+
+   Each header MUST be wrapped in its own .m-group with its rows. A sticky
+   element only unsticks when its containing block scrolls past, so bare
+   sibling headers all share the scroll body as their containing block and
+   pile up at the top together instead of handing off one to the next. */
+.m-sticky { position: sticky; top: 0; z-index: 5; }
+.m-group { position: relative; }
+
+/* Compose review summary */
+.m-review-block { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); }
+.m-review-block .m-review-k { font-size: var(--fs-1); color: var(--fg-subtle); text-transform: uppercase; letter-spacing: .05em; margin-bottom: var(--space-1); }
+.m-review-msg { background: var(--gray-2); border-radius: var(--radius-3); padding: var(--space-3); font-size: var(--fs-2); line-height: var(--lh-3); white-space: pre-wrap; }
+
+/* Selectable row used by audience and recipient pickers */
+.m-pick { display: flex; align-items: center; gap: var(--space-3); width: 100%; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); text-align: left; background: none; border-left: 0; border-right: 0; border-top: 0; cursor: pointer; }
+.m-pick .m-pick-text { flex: 1; min-width: 0; }
+.m-pick .m-pick-title { display: block; font-size: var(--fs-2); font-weight: var(--weight-medium); color: var(--fg-high); }
+.m-pick .m-pick-sub { display: block; font-size: var(--fs-1); color: var(--fg-low); }
+.m-pick .m-pick-check { flex: none; color: var(--accent-11); opacity: 0; }
+.m-pick.is-selected .m-pick-check { opacity: 1; }
+
+/* Overlay layers. Each modal surface gets its own stacking context so a
+   sheet opened from a full-screen flow paints above it, and Escape can
+   pop exactly one layer instead of collapsing the whole stack. */
+.m-layer { position: fixed; inset: 0; z-index: 100; }
