@@ -149,6 +149,25 @@
         }
       }
 
+      /* 13. An element whose background matches what is directly behind it
+         is invisible. This is how a canvas colour change silently erases a
+         search field or a badge - the element is still there, still
+         measurable, and renders as nothing. */
+      var own = cs.backgroundColor;
+      if (own && !/rgba\(0, 0, 0, 0\)|transparent/.test(own) && el.parentElement) {
+        var behind = bgOf(el.parentElement);
+        var flat = !/gradient|url/.test(cs.backgroundImage || 'none');
+        var noEdge = cs.borderTopWidth === '0px' && !/inset/.test(cs.boxShadow);
+        /* A sticky or fixed header is deliberately painted the canvas colour
+           so content scrolls invisibly beneath it, and a full-viewport
+           surface is a background rather than an object. Neither is a bug. */
+        var masking = cs.position === 'sticky' || cs.position === 'fixed' ||
+          (box.width >= w.innerWidth - 1 && box.height >= w.innerHeight - 80);
+        if (flat && noEdge && !masking && own === behind && box.width > 24 && box.height > 12) {
+          found.push(['invisible surface', (el.className || el.tagName).split(' ')[0] + '  ' + own + ' on the same colour']);
+        }
+      }
+
       /* 7. horizontal overflow of the viewport */
       if (box.right > w.innerWidth + 1 || box.left < -1) {
         if (cs.position !== 'fixed' && el.offsetParent) {

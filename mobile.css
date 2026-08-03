@@ -83,16 +83,25 @@
      circular counters and small avatars - nowhere in running text. */
   --m-fs-micro: 11px;
 
-  /* Card elevation. Deliberately NOT --shadow-2: that recipe starts with a
-     1px ring, which on a white card over a near-white canvas reads as a
-     border on some cards and vanishes on others. A ringless shadow lifts
-     every card identically. */
-  /* Spread must stay well under half the blur or the shadow never reaches
-     around the sides. The previous value (16px blur, -6px spread) extended
-     only 2px horizontally, so it pooled under the card and stopped dead at
-     the corners - which reads as a shadow that has been cut off. These two
-     layers extend ~8px on every side and wrap the radius properly. */
-  --m-shadow-card: 0 1px 2px rgba(16,24,40,.04), 0 4px 16px rgba(16,24,40,.07);
+  /* Card separation: canvas tone, not a shadow.
+
+     Three attempts at a card shadow all read as "cut". A diagnostic that
+     replaced it with a 14px opaque halo proved nothing was clipping it -
+     the shadow painted in full on all four sides. The problem is inherent:
+     a drop shadow is directional, so on a near-white canvas it is clearly
+     visible below the card and almost invisible beside it, and that
+     asymmetry reads as an edge sliced off. Tuning blur and spread only
+     moves where the asymmetry sits.
+
+     So cards carry no shadow. The canvas moves from gray-2 to gray-3 and
+     cards stay pure white; the tonal step does the grouping, identically on
+     every side, with nothing to clip or cut. iOS Settings is the same
+     pattern, and this More screen is the same problem.
+
+     Shadows remain only on things that genuinely float above the page -
+     the FAB, sheets, dialogs, snackbars - where a directional shadow is
+     correct because the object really is lifted. */
+  --m-shadow-card: none;
 
   /* Brand amber for the active tab. Points at the token rather than a raw
      hex so dark mode and any future brand change follow automatically.
@@ -153,7 +162,14 @@
    accompanied by the person's name as real text. */
 :root, :root[data-theme="light"] {
   --accent-11: #9c5b00;
-  --fg-subtle: #717171;
+  /* One step darker than the desktop canvas, so a white card separates on
+     tone alone. See --m-shadow-card. */
+  --color-page: var(--gray-3);
+  /* 4.68:1 on the gray-3 canvas, 5.33:1 on a white card. The previous
+     #717171 cleared 4.5 on white but only reached 4.28 once the canvas
+     moved a step darker - a token that passes on one surface can fail on
+     another, so both are checked. */
+  --fg-subtle: #6b6b6b;
   --success-text: #1b6e49;
   --info-text: #0c65b4;
   --warning-text: #8f5300;
@@ -543,7 +559,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .m-search {
   display: flex; align-items: center; gap: var(--space-2);
   min-height: 52px; padding: 0 var(--space-4);
-  background: var(--gray-3); border-radius: var(--radius-full);
+  /* White with a hairline, not a gray fill: the search field sits directly
+     on the canvas, and the canvas is now gray-3. */
+  background: var(--color-panel-solid); box-shadow: inset 0 0 0 1px var(--border-ui);
+  border-radius: var(--radius-full);
 }
 .m-search input { flex: 1; border: 0; background: transparent; font-size: 16px; color: var(--fg-high); outline: none; }
 
@@ -597,7 +616,6 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .m-shift {
   display: flex; align-items: center; gap: var(--m-lead-gap);
   padding: var(--space-4) var(--m-card-pad);
-  background: var(--color-panel-solid);
 }
 .m-shift .m-shift-rail { flex: none; align-self: stretch; width: 4px; min-height: 40px; border-radius: var(--radius-full); background: var(--gray-6); }
 .m-shift.is-confirmed .m-shift-rail { background: var(--success-solid); }
