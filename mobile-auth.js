@@ -85,8 +85,7 @@
         '<button class="m-btn m-btn-text state-layer u-full" id="forgot">Forgot your password?</button>' +
       '</div>' +
       '<div class="m-auth-foot">skySchedule accounts are created by your administrator.<br>' +
-        'Been invited? <button class="m-btn m-btn-text state-layer" id="invite" ' +
-        'style="padding:0;min-height:auto;text-decoration:underline;">Redeem your invite</button></div>',
+        'Been invited? <button class="m-link" id="invite">Redeem your invite</button></div>',
       function (root) {
         var pass = $('#authPass', root);
         $('#reveal', root).addEventListener('click', function () {
@@ -185,5 +184,8 @@
   }
 
   A.signIn = signIn;
-  signIn();
+  /* Exposed so the splash can use the same inline mark, and NOT invoked
+     here: mobile-onboarding.js drives the sequence and calls signIn() when
+     onboarding finishes. */
+  A.logo = function () { return LOGO; };
 })(window, document);

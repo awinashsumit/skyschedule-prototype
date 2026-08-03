@@ -76,6 +76,10 @@
       var box = el.getBoundingClientRect();
       if (!box.height || !box.width) return;
       var cs = getComputedStyle(el);
+      /* Illustration internals are aria-hidden decoration, not interface.
+         SVG <text> also has no scrollWidth, so the clipping test reports a
+         false positive on every label inside a drawing. */
+      if (el.closest('svg')) return;
       var txt = textOf(el);
 
       if (txt) {
@@ -273,9 +277,49 @@
     });
   }
 
+  /* The app now opens on splash -> onboarding -> sign in. Those screens are
+     audited first and then dismissed, both so they are covered and so the
+     rest of the run can reach the tabs at all. */
+  function preflight(found) {
+    var splash = d.querySelector('.m-splash');
+    if (splash) { audit('.m-splash', found); splash.remove(); if (w.APP.onboarding) w.APP.onboarding(); }
+
+    var onb = d.querySelector('.m-onb');
+    if (onb) {
+      for (var i = 0; i < 6; i++) {          // every slide, not just the first
+        audit('.m-onb', found);
+        var next = d.querySelector('#onbNext');
+        if (!next) break;
+        var last = /get started/i.test(next.textContent);
+        next.click();
+        if (last) break;
+      }
+      var stillThere = d.querySelector('.m-onb');
+      if (stillThere) { stillThere.remove(); w.APP.signIn(); }
+    }
+
+    var auth = d.querySelector('.m-auth');
+    if (auth) {
+      audit('.m-auth', found);
+      /* the other two auth screens are only reachable from here */
+      var invite = d.querySelector('#invite');
+      if (invite) { invite.click(); audit('.m-auth', found); d.querySelector('#backToSignIn').click(); }
+      var forgot = d.querySelector('#forgot');
+      if (forgot) { forgot.click(); audit('.m-auth', found); d.querySelector('#backToSignIn2').click(); }
+      d.querySelector('#authEmail').value = 'sumit.awinash@skypointcloud.com';
+      d.querySelector('#authPass').value = 'skypoint';
+      d.querySelector('#doSignIn').click();
+    }
+    if (d.querySelector('.m-auth')) {
+      found.push(['could not get past sign in', 'audit cannot reach the app']);
+      d.querySelector('.m-auth').remove();
+    }
+  }
+
   w.QA = function (withOverlays) {
     var found = [];
     var thaw = freeze();
+    preflight(found);
     ['home', 'schedule', 'bfms', 'messages', 'more'].forEach(function (t) {
       var tab = d.querySelector('.m-tab[data-tab="' + t + '"]');
       if (tab) tab.click();

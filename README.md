@@ -124,6 +124,17 @@ the fact that mobile is rounder. One step was added rather than more free
 numbers: `--radius-7` at 24px, for full-width mobile surfaces (bottom sheets)
 that have no desktop equivalent.
 
+**The app opens on splash → onboarding → sign in.** `mobile-onboarding.js`
+drives the sequence; `mobile-auth.js` no longer self-starts.
+
+The onboarding illustrations are drawn from the app's own components — the
+shift row with its status rail, the avatar, the message card — rather than
+stock artwork. Generic art of smiling people tells a scheduler nothing,
+whereas showing the real shift row means the product is already familiar by
+the time they reach it, and the art cannot drift out of sync with the design
+system because it is built from it. All three share one fixed viewBox so the
+sheet below does not move as you page.
+
 **Sign in is at `mobile-auth.js`.** Three screens: sign in, redeem an invite,
 reset a password. There is deliberately no open sign-up — skySchedule accounts
 are provisioned by an administrator and reconciled against HRIS on the daily
